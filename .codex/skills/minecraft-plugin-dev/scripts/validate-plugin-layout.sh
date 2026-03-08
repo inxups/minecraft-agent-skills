@@ -101,14 +101,14 @@ if [[ -n "$PLUGIN_YML" ]]; then
 
     if [[ -f "$java_file" ]]; then
       pass "main class file exists: ${java_file#$ROOT/}"
-      if rg -q 'extends[[:space:]]+JavaPlugin' "$java_file"; then
+      if grep -qE 'extends[[:space:]]+JavaPlugin' "$java_file"; then
         pass "main class extends JavaPlugin"
       else
         fail "main class does not extend JavaPlugin: ${java_file#$ROOT/}"
       fi
     elif [[ -f "$kotlin_file" ]]; then
       pass "main class file exists: ${kotlin_file#$ROOT/}"
-      if rg -q ':[[:space:]]*JavaPlugin\(\)' "$kotlin_file"; then
+      if grep -qE ':[[:space:]]*JavaPlugin\(\)' "$kotlin_file"; then
         pass "main Kotlin class extends JavaPlugin"
       else
         fail "main Kotlin class does not extend JavaPlugin: ${kotlin_file#$ROOT/}"
@@ -121,7 +121,7 @@ fi
 
 echo "Checking /reload anti-pattern..."
 if [[ -d "$ROOT/src" ]]; then
-  if rg -n '/reload|\\breload\\b' "$ROOT/src" >/dev/null 2>&1; then
+  if grep -rqE '/reload|\breload\b' "$ROOT/src" 2>/dev/null; then
     warn "detected reload usage in source (prefer restart or plugin manager alternatives)"
   else
     pass "no obvious /reload anti-pattern detected"
