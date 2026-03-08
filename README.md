@@ -46,7 +46,7 @@ Canonical source of truth is `.agents/skills/`.
 
 ```bash
 # From your Minecraft project root:
-REPO_URL="<repository-url>"
+REPO_URL="https://github.com/Jahrome907/minecraft-codex-skills"
 git clone "$REPO_URL" /tmp/mc-skills
 cp -r /tmp/mc-skills/.agents .
 ```
@@ -54,7 +54,7 @@ cp -r /tmp/mc-skills/.agents .
 ### Option B — Git submodule
 
 ```bash
-REPO_URL="<repository-url>"
+REPO_URL="https://github.com/Jahrome907/minecraft-codex-skills"
 git submodule add "$REPO_URL" .skills-src
 cp -r .skills-src/.agents .
 ```
