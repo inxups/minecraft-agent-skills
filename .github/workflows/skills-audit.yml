@@ -1,0 +1,38 @@
+name: Skills Audit
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+jobs:
+  validate-skills:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Ensure jq
+        run: |
+          if ! command -v jq >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y jq
+          fi
+          jq --version
+
+      - name: Validate mirror sync
+        run: ./scripts/sync-skills-layout.sh check
+
+      - name: Run skill audit
+        run: node ./scripts/audit-skills.mjs
+
+      - name: Run validator fixture tests
+        run: ./scripts/run-skill-validator-fixtures.sh
+
+      - name: Run markdown lint
+        run: npx -y markdownlint-cli2 "**/*.md"
