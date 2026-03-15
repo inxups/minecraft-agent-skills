@@ -15,26 +15,6 @@ automatically select the right skill for every task you assign it.
 
 ---
 
-## How It Works
-
-```mermaid
-flowchart LR
-    A["You assign a task"] --> B["Agent scans .agents/skills/"]
-    B --> C{"Match description\nto task"}
-    C -->|Mod dev| D["minecraft-modding"]
-    C -->|Plugin dev| E["minecraft-plugin-dev"]
-    C -->|Datapack| F["minecraft-datapack"]
-    C -->|Commands| G["minecraft-commands-scripting"]
-    C -->|CI/CD| H["minecraft-ci-release"]
-    C -->|Testing| I["minecraft-testing"]
-    C -->|Worldgen| J["minecraft-world-generation"]
-    C -->|Resources| K["minecraft-resource-pack"]
-    C -->|Server ops| L["minecraft-server-admin"]
-    C -->|Multiloader| M["minecraft-multiloader"]
-```
-
----
-
 ## What is a Codex Skill?
 
 Codex skills live in `.agents/skills/<skill-name>/` within a repository and are
