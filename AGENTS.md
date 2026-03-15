@@ -68,6 +68,38 @@ Compatibility mirror (kept in sync by script/CI):
     └── SKILL.md
 ```
 
+Claude Code mirror (kept in sync by script/CI):
+
+```text
+.claude/skills/
+├── minecraft-modding/            ← NeoForge + Fabric mod development
+│   ├── SKILL.md
+│   ├── references/
+│   │   ├── neoforge-api.md
+│   │   ├── fabric-api.md
+│   │   └── common-patterns.md
+│   └── scripts/
+│       └── check-build.sh
+├── minecraft-plugin-dev/         ← Paper/Bukkit server plugin development
+│   └── SKILL.md
+├── minecraft-datapack/           ← Vanilla datapack authoring (no Java)
+│   └── SKILL.md
+├── minecraft-commands-scripting/ ← Vanilla commands, scoreboards, NBT, RCON
+│   └── SKILL.md
+├── minecraft-multiloader/        ← Architectury NeoForge + Fabric multiloader
+│   └── SKILL.md
+├── minecraft-testing/            ← JUnit 5, MockBukkit, GameTests, CI
+│   └── SKILL.md
+├── minecraft-ci-release/         ← GitHub Actions, Modrinth/CurseForge publishing
+│   └── SKILL.md
+├── minecraft-world-generation/   ← Custom biomes, dimensions, structures
+│   └── SKILL.md
+├── minecraft-resource-pack/      ← Textures, models, sounds, shaders
+│   └── SKILL.md
+└── minecraft-server-admin/       ← Server setup, JVM tuning, Docker, Velocity
+    └── SKILL.md
+```
+
 ## Skill Selection Guide
 
 Codex selects skills automatically from the `description` field in each `SKILL.md`.
@@ -90,7 +122,7 @@ The table below maps task types to which skill(s) to load:
 
 - **Do not** run Minecraft, Gradle, or Paper server commands here; there is no game project to build.
 - When editing skill files, keep examples accurate for **Minecraft 1.21.x**.
-- All Java examples must compile against **Java 21**.
+- Keep Java examples correct for **Java 21** and verify changed examples in their target project context.
 - Keep JSON snippets valid and pretty-printed with 2-space indentation.
 - Mark platform-specific patterns (NeoForge / Fabric / Paper) clearly.
 - Prefer complete, runnable code snippets over pseudo-code.
