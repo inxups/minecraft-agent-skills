@@ -1,5 +1,10 @@
 # minecraft-codex-skills
 
+[![Skills Audit](https://github.com/Jahrome907/minecraft-codex-skills/actions/workflows/skills-audit.yml/badge.svg)](https://github.com/Jahrome907/minecraft-codex-skills/actions/workflows/skills-audit.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![GitHub release](https://img.shields.io/github/v/release/Jahrome907/minecraft-codex-skills)](https://github.com/Jahrome907/minecraft-codex-skills/releases/latest)
+[![Minecraft](https://img.shields.io/badge/Minecraft-1.21.x-brightgreen)](https://www.minecraft.net/)
+
 An open-source collection of **10 AI coding agent skills** covering every major area
 of Minecraft development — mods, plugins, datapacks, commands, testing, CI/CD,
 world generation, resource packs, and server administration.
@@ -7,6 +12,26 @@ world generation, resource packs, and server administration.
 Drop the `.agents/` folder (for Codex), `.claude/` folder (for Claude Code),
 or `.codex/` folder into any Minecraft project and your AI agent will
 automatically select the right skill for every task you assign it.
+
+---
+
+## How It Works
+
+```mermaid
+flowchart LR
+    A["You assign a task"] --> B["Agent scans .agents/skills/"]
+    B --> C{"Match description\nto task"}
+    C -->|Mod dev| D["minecraft-modding"]
+    C -->|Plugin dev| E["minecraft-plugin-dev"]
+    C -->|Datapack| F["minecraft-datapack"]
+    C -->|Commands| G["minecraft-commands-scripting"]
+    C -->|CI/CD| H["minecraft-ci-release"]
+    C -->|Testing| I["minecraft-testing"]
+    C -->|Worldgen| J["minecraft-world-generation"]
+    C -->|Resources| K["minecraft-resource-pack"]
+    C -->|Server ops| L["minecraft-server-admin"]
+    C -->|Multiloader| M["minecraft-multiloader"]
+```
 
 ---
 
