@@ -13,6 +13,10 @@ Drop the `.agents/` folder (for Codex), `.claude/` folder (for Claude Code),
 or `.codex/` folder into any Minecraft project and your AI agent will
 automatically select the right skill for every task you assign it.
 
+<p align="center">
+  <img src="docs/assets/how-it-works.svg" alt="How It Works — 3-step flow: drop skills in, assign a task, skill activates" width="720"/>
+</p>
+
 ---
 
 ## What is a Codex Skill?
