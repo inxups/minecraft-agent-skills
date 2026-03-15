@@ -1,28 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 340" fill="none">
-  <style>
-    .title { font: 700 17px 'Inter', 'Helvetica Neue', Arial, sans-serif; fill: #c9d1d9; }
-    .step-num { font: 700 13px 'Inter', 'Helvetica Neue', Arial, sans-serif; }
-    .step-label { font: 600 13px 'Inter', 'Helvetica Neue', Arial, sans-serif; fill: #c9d1d9; }
-    .step-detail { font: 400 11.5px 'Inter', 'Helvetica Neue', Arial, sans-serif; fill: #8b949e; }
-    .step-code { font: 400 11.5px 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace; fill: #58a6ff; }
-    .step-green { font: 400 11.5px 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace; fill: #3fb950; }
-    .section { font: 600 11px 'Inter', 'Helvetica Neue', Arial, sans-serif; fill: #6e7681; letter-spacing: 1.5px; }
-    .pill { font: 500 11px 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace; fill: #58a6ff; }
-    .footer { font: 400 11px 'Inter', 'Helvetica Neue', Arial, sans-serif; fill: #8b949e; }
-  </style>
 
   <!-- Background -->
   <rect width="800" height="340" rx="8" fill="#0d1117"/>
 
   <!-- Title -->
-  <text x="400" y="36" text-anchor="middle" class="title">How It Works</text>
+  <text x="400" y="36" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif" font-size="17" font-weight="700" fill="#c9d1d9">How It Works</text>
 
   <!-- Step 1 -->
   <rect x="32" y="60" width="224" height="80" rx="8" fill="#161b22" stroke="#21262d" stroke-width="1"/>
-  <text x="144" y="84" text-anchor="middle" class="step-num" fill="#58a6ff">01</text>
-  <text x="144" y="100" text-anchor="middle" class="step-label">Drop skills in</text>
-  <text x="144" y="116" text-anchor="middle" class="step-detail">Copy into your project:</text>
-  <text x="144" y="132" text-anchor="middle" class="step-code">.agents/skills/</text>
+  <text x="144" y="84" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif" font-size="13" font-weight="700" fill="#58a6ff">01</text>
+  <text x="144" y="100" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif" font-size="13" font-weight="600" fill="#c9d1d9">Drop skills in</text>
+  <text x="144" y="116" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif" font-size="11" font-weight="400" fill="#8b949e">Copy into your project:</text>
+  <text x="144" y="132" text-anchor="middle" font-family="'Courier New',monospace" font-size="11" fill="#58a6ff">.agents/skills/</text>
 
   <!-- Arrow 1→2 -->
   <path d="M256,100 L278,100" stroke="#8b949e" stroke-width="1.5" fill="none"/>
@@ -30,10 +19,10 @@
 
   <!-- Step 2 -->
   <rect x="292" y="60" width="224" height="80" rx="8" fill="#161b22" stroke="#21262d" stroke-width="1"/>
-  <text x="404" y="84" text-anchor="middle" class="step-num" fill="#e3b341">02</text>
-  <text x="404" y="100" text-anchor="middle" class="step-label">Assign a task</text>
-  <text x="404" y="116" text-anchor="middle" class="step-detail">"Add a custom ore block</text>
-  <text x="404" y="132" text-anchor="middle" class="step-detail">with world generation"</text>
+  <text x="404" y="84" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif" font-size="13" font-weight="700" fill="#e3b341">02</text>
+  <text x="404" y="100" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif" font-size="13" font-weight="600" fill="#c9d1d9">Assign a task</text>
+  <text x="404" y="116" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif" font-size="11" font-weight="400" fill="#8b949e">"Add a custom ore block</text>
+  <text x="404" y="132" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif" font-size="11" font-weight="400" fill="#8b949e">with world generation"</text>
 
   <!-- Arrow 2→3 -->
   <path d="M516,100 L538,100" stroke="#8b949e" stroke-width="1.5" fill="none"/>
@@ -41,46 +30,46 @@
 
   <!-- Step 3 -->
   <rect x="552" y="60" width="216" height="80" rx="8" fill="#161b22" stroke="#21262d" stroke-width="1"/>
-  <text x="660" y="84" text-anchor="middle" class="step-num" fill="#3fb950">03</text>
-  <text x="660" y="100" text-anchor="middle" class="step-label">Skill activates</text>
-  <text x="660" y="116" text-anchor="middle" class="step-detail">Agent auto-selects:</text>
-  <text x="660" y="132" text-anchor="middle" class="step-green">minecraft-modding</text>
+  <text x="660" y="84" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif" font-size="13" font-weight="700" fill="#3fb950">03</text>
+  <text x="660" y="100" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif" font-size="13" font-weight="600" fill="#c9d1d9">Skill activates</text>
+  <text x="660" y="116" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif" font-size="11" font-weight="400" fill="#8b949e">Agent auto-selects:</text>
+  <text x="660" y="132" text-anchor="middle" font-family="'Courier New',monospace" font-size="11" fill="#3fb950">minecraft-modding</text>
 
-  <!-- Divider -->
-  <text x="400" y="180" text-anchor="middle" class="section">10 SKILLS INCLUDED</text>
+  <!-- Divider label -->
+  <text x="400" y="180" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif" font-size="11" font-weight="600" fill="#6e7681" letter-spacing="1.5">10 SKILLS INCLUDED</text>
 
   <!-- Skills grid — Row 1 -->
   <rect x="32"  y="196" width="142" height="32" rx="6" fill="none" stroke="#21262d" stroke-width="1"/>
-  <text x="103" y="217" text-anchor="middle" class="pill">modding</text>
+  <text x="103" y="217" text-anchor="middle" font-family="'Courier New',monospace" font-size="11" fill="#58a6ff">modding</text>
 
   <rect x="186" y="196" width="142" height="32" rx="6" fill="none" stroke="#21262d" stroke-width="1"/>
-  <text x="257" y="217" text-anchor="middle" class="pill">plugin-dev</text>
+  <text x="257" y="217" text-anchor="middle" font-family="'Courier New',monospace" font-size="11" fill="#58a6ff">plugin-dev</text>
 
   <rect x="340" y="196" width="142" height="32" rx="6" fill="none" stroke="#21262d" stroke-width="1"/>
-  <text x="411" y="217" text-anchor="middle" class="pill">datapack</text>
+  <text x="411" y="217" text-anchor="middle" font-family="'Courier New',monospace" font-size="11" fill="#58a6ff">datapack</text>
 
   <rect x="494" y="196" width="142" height="32" rx="6" fill="none" stroke="#21262d" stroke-width="1"/>
-  <text x="565" y="217" text-anchor="middle" class="pill">commands</text>
+  <text x="565" y="217" text-anchor="middle" font-family="'Courier New',monospace" font-size="11" fill="#58a6ff">commands</text>
 
   <rect x="648" y="196" width="120" height="32" rx="6" fill="none" stroke="#21262d" stroke-width="1"/>
-  <text x="708" y="217" text-anchor="middle" class="pill">ci-release</text>
+  <text x="708" y="217" text-anchor="middle" font-family="'Courier New',monospace" font-size="11" fill="#58a6ff">ci-release</text>
 
   <!-- Skills grid — Row 2 -->
   <rect x="32"  y="240" width="142" height="32" rx="6" fill="none" stroke="#21262d" stroke-width="1"/>
-  <text x="103" y="261" text-anchor="middle" class="pill">testing</text>
+  <text x="103" y="261" text-anchor="middle" font-family="'Courier New',monospace" font-size="11" fill="#58a6ff">testing</text>
 
   <rect x="186" y="240" width="142" height="32" rx="6" fill="none" stroke="#21262d" stroke-width="1"/>
-  <text x="257" y="261" text-anchor="middle" class="pill">world-generation</text>
+  <text x="257" y="261" text-anchor="middle" font-family="'Courier New',monospace" font-size="11" fill="#58a6ff">world-generation</text>
 
   <rect x="340" y="240" width="142" height="32" rx="6" fill="none" stroke="#21262d" stroke-width="1"/>
-  <text x="411" y="261" text-anchor="middle" class="pill">resource-pack</text>
+  <text x="411" y="261" text-anchor="middle" font-family="'Courier New',monospace" font-size="11" fill="#58a6ff">resource-pack</text>
 
   <rect x="494" y="240" width="142" height="32" rx="6" fill="none" stroke="#21262d" stroke-width="1"/>
-  <text x="565" y="261" text-anchor="middle" class="pill">server-admin</text>
+  <text x="565" y="261" text-anchor="middle" font-family="'Courier New',monospace" font-size="11" fill="#58a6ff">server-admin</text>
 
   <rect x="648" y="240" width="120" height="32" rx="6" fill="none" stroke="#21262d" stroke-width="1"/>
-  <text x="708" y="261" text-anchor="middle" class="pill">multiloader</text>
+  <text x="708" y="261" text-anchor="middle" font-family="'Courier New',monospace" font-size="11" fill="#58a6ff">multiloader</text>
 
   <!-- Footer -->
-  <text x="400" y="308" text-anchor="middle" class="footer">Works with Codex · Claude Code · any agent that reads .agents/skills/</text>
+  <text x="400" y="308" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif" font-size="11" fill="#8b949e">Works with Codex · Claude Code · any agent that reads .agents/skills/</text>
 </svg>
