@@ -5,7 +5,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-### Changed
+## [2.3.1] - 2026-03-27
+
+### Changed (2.3.1)
 
 - Renamed the GitHub repository to `minecraft-agent-skills` and updated public URLs, badges, and metadata while keeping the bundled plugin identifier `minecraft-codex-skills` for install compatibility
 
