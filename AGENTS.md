@@ -1,4 +1,4 @@
-# AGENTS.md — minecraft-codex-skills Repository
+# AGENTS.md — minecraft-agent-skills Repository
 
 This repository is a collection of **10 Minecraft development skills** plus a
 dual-target plugin bundle for Codex and Claude Code.

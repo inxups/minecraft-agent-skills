@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for contributing to `minecraft-codex-skills`.
+Thanks for contributing to `minecraft-agent-skills`.
 
 ## Repository Model
 

@@ -1,8 +1,8 @@
-# minecraft-codex-skills
+# minecraft-agent-skills
 
-[![Skills Audit](https://github.com/Jahrome907/minecraft-codex-skills/actions/workflows/skills-audit.yml/badge.svg)](https://github.com/Jahrome907/minecraft-codex-skills/actions/workflows/skills-audit.yml)
+[![Skills Audit](https://github.com/Jahrome907/minecraft-agent-skills/actions/workflows/skills-audit.yml/badge.svg)](https://github.com/Jahrome907/minecraft-agent-skills/actions/workflows/skills-audit.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![GitHub release](https://img.shields.io/github/v/release/Jahrome907/minecraft-codex-skills)](https://github.com/Jahrome907/minecraft-codex-skills/releases/latest)
+[![GitHub release](https://img.shields.io/github/v/release/Jahrome907/minecraft-agent-skills)](https://github.com/Jahrome907/minecraft-agent-skills/releases/latest)
 [![Minecraft](https://img.shields.io/badge/Minecraft-1.21.x-brightgreen)](https://www.minecraft.net/)
 
 An open-source collection of **10 AI coding agent skills** covering every major area
@@ -11,6 +11,9 @@ world generation, resource packs, and server administration.
 
 Use it either as raw skill folders for Codex or Claude Code, or as a dual-target
 plugin bundle under `plugins/minecraft-codex-skills/` for plugin-based installs.
+
+The repository is branded as `minecraft-agent-skills`; the bundled plugin/package
+identifier remains `minecraft-codex-skills` for marketplace and install compatibility.
 
 <!-- markdownlint-disable MD033 -->
 <p align="center">
@@ -56,7 +59,7 @@ bundle at `plugins/minecraft-codex-skills/skills/`.
 ### Option A — Raw skills for Codex
 
 ```bash
-REPO_URL="https://github.com/Jahrome907/minecraft-codex-skills"
+REPO_URL="https://github.com/Jahrome907/minecraft-agent-skills"
 git clone "$REPO_URL" /tmp/mc-skills
 cp -r /tmp/mc-skills/.agents .
 ```
@@ -67,7 +70,7 @@ mirror is kept byte-for-byte identical if you prefer that layout.
 ### Option B — Raw skills for Claude Code
 
 ```bash
-REPO_URL="https://github.com/Jahrome907/minecraft-codex-skills"
+REPO_URL="https://github.com/Jahrome907/minecraft-agent-skills"
 git clone "$REPO_URL" /tmp/mc-skills
 cp -r /tmp/mc-skills/.claude .
 ```
@@ -100,7 +103,7 @@ claude --plugin-dir ./plugins/minecraft-codex-skills
 ### Option D — Git submodule
 
 ```bash
-REPO_URL="https://github.com/Jahrome907/minecraft-codex-skills"
+REPO_URL="https://github.com/Jahrome907/minecraft-agent-skills"
 git submodule add "$REPO_URL" .skills-src
 cp -r .skills-src/.agents .
 ```
@@ -108,7 +111,7 @@ cp -r .skills-src/.agents .
 ### Option E — Manual download
 
 Download the latest release from
-`https://github.com/Jahrome907/minecraft-codex-skills/releases/latest`.
+`https://github.com/Jahrome907/minecraft-agent-skills/releases/latest`.
 
 - Use `.agents/` or `.codex/` for Codex raw-skill installs.
 - Use `.claude/` for Claude Code raw-skill installs.
