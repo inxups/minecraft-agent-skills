@@ -264,7 +264,7 @@ codex "Write a datapack function that detects when a player kills 10 zombies \
       and gives them a custom advancement with a diamond reward."
 
 # Server admin
-codex "Generate a docker-compose.yml for a Paper 1.21.1 server with Aikar's \
+codex "Generate a docker-compose.yml for a Paper 1.21.11 server with Aikar's \
       JVM flags, persistent volumes, and auto-restart on crash."
 ```
 
@@ -303,27 +303,25 @@ skill trees.
 
 |Platform|Version|Java|
 |---|---|---|
-|NeoForge|21.1.x / 21.4.x / 21.5.x|21|
-|Fabric|0.114.x+|21|
+|NeoForge|1.21.x examples centered on 21.11.x|21|
+|Fabric|1.21.11 line (`fabric-api:0.116.10+1.21.1`)|21|
 |Paper/Bukkit|1.21.x (`paper-api:1.21.11-R0.1-SNAPSHOT`)|21|
-|Vanilla datapack|1.21–1.21.5 (pack formats 48–71)|—|
-|Resource pack|1.21–1.21.5 (pack formats 34–55)|—|
+|Vanilla datapack|1.21–1.21.11 (formats 48–94.1; `min_format` / `max_format` from 1.21.9+)|—|
+|Resource pack|1.21–1.21.11 (formats 34–75.0; `min_format` / `max_format` from 1.21.9+)|—|
 
 ---
 
-## Contributing
+## Repo Notes
 
-PRs are welcome! Before opening one:
+This repository is a small, owner-managed skills bundle rather than a broader contributor project.
 
-1. Verify Java examples you change remain correct for **Java 21** in their target project context
-2. Validate all JSON with `jq . < file.json`
-3. Test against the stated Minecraft / platform version
-4. Add a `CHANGELOG.md` entry describing what changed
-5. Keep examples complete and runnable — no pseudo-code
+If you need to inspect or update repo structure:
 
-See [AGENTS.md](AGENTS.md) and [docs/skill-authoring-standard.md](docs/skill-authoring-standard.md) for guidance on editing skill files.
-See [CONTRIBUTING.md](CONTRIBUTING.md) for PR workflow and quality gates.
-Public issues should use the GitHub issue templates, and security reports should follow [SECURITY.md](SECURITY.md).
+1. Edit canonical skill content in `.agents/skills/`
+2. Keep `.codex/skills/`, `.claude/skills/`, and `plugins/minecraft-codex-skills/skills/` synchronized
+3. Run `npm run check` before publishing repo-level changes
+
+See [AGENTS.md](AGENTS.md) and [docs/skill-authoring-standard.md](docs/skill-authoring-standard.md) for the repo-specific editing model.
 
 ---
 
