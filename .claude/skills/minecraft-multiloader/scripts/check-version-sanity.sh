@@ -59,6 +59,7 @@ read_prop() {
   local key="$1"
   local value
   value="$(sed -n -E "s/^${key}=//p" "$PROPS" | head -n 1)"
+  value="${value//$'\r'/}"
   printf '%s' "$value"
 }
 

@@ -38,6 +38,33 @@ expect_pass() {
   fi
 }
 
+expect_pass_contains() {
+  local name="$1"
+  local pattern="$2"
+  shift
+  shift
+
+  local output_file
+  output_file="$(mktemp)"
+  if "$@" >"$output_file" 2>&1; then
+    if grep -Fq "$pattern" "$output_file"; then
+      cat "$output_file"
+      rm -f "$output_file"
+      echo "$PASS $name"
+    else
+      cat "$output_file"
+      rm -f "$output_file"
+      echo "$FAIL $name (missing expected output: $pattern)" >&2
+      exit 1
+    fi
+  else
+    cat "$output_file"
+    rm -f "$output_file"
+    echo "$FAIL $name (expected pass)" >&2
+    exit 1
+  fi
+}
+
 expect_fail_contains() {
   local name="$1"
   local pattern="$2"
@@ -143,13 +170,132 @@ expect_temp_skill_pass "ci-release standalone installed mirror" \
   ./.codex/skills/minecraft-ci-release
 
 expect_path "tests/fixtures/validators/plugin-dev/valid"
+expect_path "tests/fixtures/validators/plugin-dev/valid-newer-api-version"
 expect_path "tests/fixtures/validators/plugin-dev/invalid"
+expect_path "tests/fixtures/validators/plugin-dev/invalid-api-version"
+expect_path "tests/fixtures/validators/plugin-dev/invalid-api-version-zero-patch"
 expect_pass "plugin-dev valid" \
   ./.agents/skills/minecraft-plugin-dev/scripts/validate-plugin-layout.sh \
   --root tests/fixtures/validators/plugin-dev/valid
+expect_pass_contains "plugin-dev valid newer api-version warns" "newer than the repo's documented Paper example patch" \
+  ./.agents/skills/minecraft-plugin-dev/scripts/validate-plugin-layout.sh \
+  --root tests/fixtures/validators/plugin-dev/valid-newer-api-version
 expect_fail_contains "plugin-dev invalid" "api-version has invalid format" \
   ./.agents/skills/minecraft-plugin-dev/scripts/validate-plugin-layout.sh \
   --root tests/fixtures/validators/plugin-dev/invalid
+expect_fail_contains "plugin-dev invalid api-version range" "api-version is outside the documented 1.21.x skill scope" \
+  ./.agents/skills/minecraft-plugin-dev/scripts/validate-plugin-layout.sh \
+  --root tests/fixtures/validators/plugin-dev/invalid-api-version
+expect_fail_contains "plugin-dev invalid api-version zero patch" "patch must be a positive integer without leading zeroes" \
+  ./.agents/skills/minecraft-plugin-dev/scripts/validate-plugin-layout.sh \
+  --root tests/fixtures/validators/plugin-dev/invalid-api-version-zero-patch
+
+imagegen_workspace="$(mktemp -d)"
+imagegen_install_root="$(mktemp -d)"
+imagegen_skill_dir="$imagegen_install_root/local/skills/minecraft-imagegen"
+mkdir -p "$imagegen_skill_dir"
+cp -R ./.agents/skills/minecraft-imagegen/. "$imagegen_skill_dir"
+if (
+  cd "$imagegen_skill_dir"
+  OLDPWD="$imagegen_workspace" bash ./scripts/scaffold-asset-brief.sh --type pack-icon --name smoke-test
+); then
+  if [[ -f "$imagegen_workspace/smoke-test-asset-brief.md" ]]; then
+    echo "$PASS imagegen scaffold workspace inference"
+  else
+    echo "$FAIL imagegen scaffold workspace inference (brief missing from inferred workspace)" >&2
+    rm -rf "$imagegen_workspace" "$imagegen_install_root"
+    exit 1
+  fi
+else
+  rm -rf "$imagegen_workspace" "$imagegen_install_root"
+  echo "$FAIL imagegen scaffold workspace inference (expected pass)" >&2
+  exit 1
+fi
+rm -rf "$imagegen_workspace" "$imagegen_install_root"
+
+imagegen_workspace="$(mktemp -d)"
+imagegen_install_root="$(mktemp -d)"
+imagegen_skill_dir="$imagegen_install_root/local/skills/minecraft-imagegen"
+mkdir -p "$imagegen_skill_dir"
+cp -R ./.agents/skills/minecraft-imagegen/. "$imagegen_skill_dir"
+if (
+  cd "$imagegen_skill_dir"
+  OLDPWD="$imagegen_workspace" bash ./scripts/scaffold-asset-brief.sh --type release-banner --name relative-out --out docs/briefs
+); then
+  if [[ -f "$imagegen_workspace/docs/briefs/relative-out-asset-brief.md" ]]; then
+    if [[ -f "$imagegen_skill_dir/docs/briefs/relative-out-asset-brief.md" ]]; then
+      echo "$FAIL imagegen scaffold relative --out resolution (brief was written into installed skill dir)" >&2
+      rm -rf "$imagegen_workspace" "$imagegen_install_root"
+      exit 1
+    fi
+    echo "$PASS imagegen scaffold relative --out resolution"
+  else
+    echo "$FAIL imagegen scaffold relative --out resolution (brief missing from workspace-relative output dir)" >&2
+    rm -rf "$imagegen_workspace" "$imagegen_install_root"
+    exit 1
+  fi
+else
+  rm -rf "$imagegen_workspace" "$imagegen_install_root"
+  echo "$FAIL imagegen scaffold relative --out resolution (expected pass)" >&2
+  exit 1
+fi
+rm -rf "$imagegen_workspace" "$imagegen_install_root"
+
+imagegen_home="$(mktemp -d)"
+imagegen_skill_dir="$imagegen_home/.codex/skills/minecraft-imagegen"
+mkdir -p "$imagegen_skill_dir"
+cp -R ./.agents/skills/minecraft-imagegen/. "$imagegen_skill_dir"
+imagegen_output="$(mktemp)"
+if (
+  cd "$imagegen_skill_dir"
+  unset OLDPWD CODEX_WORKSPACE_ROOT
+  HOME="$imagegen_home" bash ./scripts/scaffold-asset-brief.sh --type pack-icon --name raw-install
+) >"$imagegen_output" 2>&1; then
+  cat "$imagegen_output"
+  rm -f "$imagegen_output"
+  rm -rf "$imagegen_home"
+  echo "$FAIL imagegen scaffold raw ~/.codex install requires explicit workspace (expected failure)" >&2
+  exit 1
+elif grep -Fq "Could not infer a project workspace for the asset brief." "$imagegen_output"; then
+  cat "$imagegen_output"
+  rm -f "$imagegen_output"
+  rm -rf "$imagegen_home"
+  echo "$PASS imagegen scaffold raw ~/.codex install requires explicit workspace"
+else
+  cat "$imagegen_output"
+  rm -f "$imagegen_output"
+  rm -rf "$imagegen_home"
+  echo "$FAIL imagegen scaffold raw ~/.codex install requires explicit workspace (missing expected output)" >&2
+  exit 1
+fi
+
+imagegen_home="$(mktemp -d)"
+imagegen_skill_dir="$imagegen_home/.claude/skills/minecraft-imagegen"
+mkdir -p "$imagegen_skill_dir"
+cp -R ./.agents/skills/minecraft-imagegen/. "$imagegen_skill_dir"
+imagegen_output="$(mktemp)"
+if (
+  cd "$imagegen_skill_dir"
+  unset OLDPWD CODEX_WORKSPACE_ROOT
+  HOME="$imagegen_home" bash ./scripts/scaffold-asset-brief.sh --type pack-icon --name raw-install
+) >"$imagegen_output" 2>&1; then
+  cat "$imagegen_output"
+  rm -f "$imagegen_output"
+  rm -rf "$imagegen_home"
+  echo "$FAIL imagegen scaffold raw ~/.claude install requires explicit workspace (expected failure)" >&2
+  exit 1
+elif grep -Fq "Could not infer a project workspace for the asset brief." "$imagegen_output"; then
+  cat "$imagegen_output"
+  rm -f "$imagegen_output"
+  rm -rf "$imagegen_home"
+  echo "$PASS imagegen scaffold raw ~/.claude install requires explicit workspace"
+else
+  cat "$imagegen_output"
+  rm -f "$imagegen_output"
+  rm -rf "$imagegen_home"
+  echo "$FAIL imagegen scaffold raw ~/.claude install requires explicit workspace (missing expected output)" >&2
+  exit 1
+fi
 
 expect_path "tests/fixtures/validators/testing/valid"
 expect_path "tests/fixtures/validators/testing/invalid"

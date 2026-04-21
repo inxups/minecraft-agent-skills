@@ -144,6 +144,10 @@ permissions:
 > Paper 1.20.5+ supports major/minor/patch `api-version` values.
 > Use `api-version: '1.21.11'` when you target that Paper patch specifically, or `api-version: '1.21'`
 > only when you intentionally support the broader 1.21.x line.
+> In this repo, the validator accepts `1.21` plus positive `1.21.<patch>` values on the 1.21 line.
+> Patches newer than the repo's current example patch (`1.21.11`) are allowed but warned so future
+> Paper updates do not force an immediate validator edit.
+> Values such as `1.21.0`, `1.21.01`, or `1.22` are rejected.
 
 ### `paper-plugin.yml` (Paper-only metadata)
 
@@ -697,7 +701,7 @@ Use the bundled validator before publishing a Paper plugin:
 ```
 
 What it checks:
-- `plugin.yml` required keys (`name`, `version`, `main`, `api-version`)
+- `plugin.yml` required keys (`name`, `version`, `main`, `api-version`) and repo-supported `1.21` / positive `1.21.<patch>` `api-version` values on the 1.21.x line, with warnings for patches newer than the repo's current example version
 - Main class path exists and extends `JavaPlugin`
 - `/reload` anti-pattern detection in source snippets
 

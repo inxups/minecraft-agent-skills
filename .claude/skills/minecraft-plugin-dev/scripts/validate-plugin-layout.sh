@@ -43,10 +43,45 @@ fi
 
 FAILURES=0
 WARNINGS=0
+CURRENT_EXAMPLE_API_PATCH=11
 
 pass() { echo "$PASS $*"; }
 warn() { echo "$WARN $*"; WARNINGS=$((WARNINGS + 1)); }
 fail() { echo "$FAIL $*"; FAILURES=$((FAILURES + 1)); }
+
+validate_api_version() {
+  local value="$1"
+
+  if [[ "$value" =~ ^1\.21$ ]]; then
+    return 0
+  fi
+
+  if [[ "$value" =~ ^1\.21\.([1-9][0-9]*)$ ]]; then
+    return 0
+  fi
+
+  return 1
+}
+
+extract_api_version_patch() {
+  local value="$1"
+  if [[ "$value" =~ ^1\.21\.([1-9][0-9]*)$ ]]; then
+    printf '%s\n' "${BASH_REMATCH[1]}"
+    return 0
+  fi
+
+  return 1
+}
+
+warn_if_newer_than_example_api_version() {
+  local value="$1"
+  local patch=""
+
+  patch="$(extract_api_version_patch "$value" || true)"
+  if [[ -n "$patch" ]] && (( patch > CURRENT_EXAMPLE_API_PATCH )); then
+    warn "plugin.yml api-version is newer than the repo's documented Paper example patch (1.21.${CURRENT_EXAMPLE_API_PATCH}); verify it against the current Paper release line"
+  fi
+}
 
 trim() {
   local s="$1"
@@ -91,8 +126,13 @@ if [[ -n "$PLUGIN_YML" ]]; then
 
   if [[ -z "$api_val" ]]; then
     fail "plugin.yml missing key: api-version"
+  elif validate_api_version "$api_val"; then
+    pass "plugin.yml api-version is within the documented 1.21.x skill scope: $api_val"
+    warn_if_newer_than_example_api_version "$api_val"
+  elif [[ "$api_val" =~ ^1\.21\.0[0-9]*$ ]]; then
+    fail "plugin.yml api-version patch must be a positive integer without leading zeroes: $api_val"
   elif [[ "$api_val" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
-    pass "plugin.yml api-version format is valid: $api_val"
+    fail "plugin.yml api-version is outside the documented 1.21.x skill scope: $api_val"
   else
     fail "plugin.yml api-version has invalid format: $api_val"
   fi

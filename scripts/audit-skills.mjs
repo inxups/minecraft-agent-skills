@@ -11,6 +11,12 @@ const MIRRORS = [
   { dir: path.join(ROOT, ".claude", "skills"), label: ".claude/skills" },
   { dir: path.join(ROOT, "plugins", "minecraft-codex-skills", "skills"), label: "plugins/minecraft-codex-skills/skills" },
 ];
+const FORBIDDEN_REPO_ROOT_SKILL_FILES = [
+  path.join(ROOT, "SKILL.md"),
+  path.join(ROOT, "references", "asset-recipes.md"),
+  path.join(ROOT, "references", "prompt-patterns.md"),
+  path.join(ROOT, "scripts", "scaffold-asset-brief.sh"),
+];
 
 const errors = [];
 
@@ -112,6 +118,24 @@ function checkRoutingBoundaries(file, text) {
   if (!hasDoNotUseWhen) addError(file, "routing section missing `- `Do not use when`:` criterion");
 }
 
+function checkSpecialSkillRequirements(skillName, file, text) {
+  if (skillName !== "minecraft-imagegen") return;
+
+  if (!text.includes("current host does not expose built-in image generation")) {
+    addError(file, "minecraft-imagegen must explicitly guard hosts that do not expose image generation");
+  }
+
+  if (!text.includes("this skill is unavailable on that host")) {
+    addError(file, "minecraft-imagegen must tell unsupported hosts to stop at planning/briefing instead of promising image generation");
+  }
+}
+
+for (const file of FORBIDDEN_REPO_ROOT_SKILL_FILES) {
+  if (fs.existsSync(file)) {
+    addError(file, "unexpected repo-root minecraft-imagegen copy; keep image skill files only under .agents/skills and synced mirrors");
+  }
+}
+
 if (!fs.existsSync(CANONICAL)) {
   addError(".agents/skills", "canonical skills directory is missing");
 } else {
@@ -140,6 +164,7 @@ if (!fs.existsSync(CANONICAL)) {
     checkRoutingBoundaries(skillRel, text);
     checkRunnableBlocks(skillRel, text);
     checkPathConventions(skillRel, text);
+    checkSpecialSkillRequirements(skillName, skillRel, text);
   }
 
   const canonicalFiles = walkFiles(CANONICAL);
