@@ -19,6 +19,10 @@ description: >
 - `Do not use when`: the task is WorldEdit command workflows (`minecraft-worldedit-ops`) or EssentialsX workflow/policy design (`minecraft-essentials-ops`).
 - `Do not use when`: the task is datapack/resource-pack authoring (`minecraft-datapack`, `minecraft-resource-pack`).
 
+## Support Assets
+
+- Read `references/deployment-checklists.md` when the task is an incident, rollout window, proxy change, or recovery drill and you need a compact checklist before acting.
+
 ---
 
 ## Deployment Decision Matrix

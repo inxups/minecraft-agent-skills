@@ -34,6 +34,10 @@ Operational best practice:
 2. Keep automatic backups before major region operations.
 3. Use conservative selection + mask constraints before destructive commands.
 
+## Support Assets
+
+- Read `references/safety-checklists.md` before large pastes, destructive replacements, or any edit where rollback discipline matters more than speed.
+
 ---
 
 ## Core Selection Workflow

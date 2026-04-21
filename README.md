@@ -5,20 +5,23 @@
 [![GitHub release](https://img.shields.io/github/v/release/Jahrome907/minecraft-agent-skills)](https://github.com/Jahrome907/minecraft-agent-skills/releases/latest)
 [![Minecraft](https://img.shields.io/badge/Minecraft-1.21.x-brightgreen)](https://www.minecraft.net/)
 
-A public skills bundle of **12 AI coding agent skills** covering every major area
+A public skills bundle of **13 AI agent skills** covering every major area
 of Minecraft development — mods, plugins, datapacks, commands, testing, CI/CD,
 world generation, resource packs, server administration, WorldEdit operations,
-and EssentialsX operations.
+EssentialsX operations, and image generation for pack art, texture concepts,
+thumbnails, and promo assets.
 
 Use it either as raw skill folders for Codex or Claude Code, or as a dual-target
 plugin bundle under `plugins/minecraft-codex-skills/` for plugin-based installs.
+The `minecraft-imagegen` skill requires a host that exposes image generation;
+Codex supports that directly, while other hosts should treat that skill as conditional.
 
 The repository is branded as `minecraft-agent-skills`; the bundled plugin/package
 identifier remains `minecraft-codex-skills` for marketplace and install compatibility.
 
 <!-- markdownlint-disable MD033 -->
 <p align="center">
-      <img src="docs/assets/how-it-works.svg" alt="How It Works — choose raw skills or plugin install, load the skills into your agent, assign a task, and the right skill activates" width="100%"/>
+      <img src="docs/assets/how-it-works.svg" alt="How It Works — choose raw skills or plugin install, load the 13-skill bundle into your agent, assign a task, and let the right skill activate; image generation is Codex-first" width="100%"/>
 </p>
 <!-- markdownlint-enable MD033 -->
 
@@ -31,11 +34,12 @@ marketplace flow or Claude Code's `--plugin-dir` support.
 
 ## What is a Codex Skill?
 
-Codex skills live in `.agents/skills/<skill-name>/` within a repository and are
-read by [OpenAI Codex](https://openai.com/index/introducing-codex/) whenever you
-assign it a task. Each `SKILL.md` file defines the skill's `name`, `description`,
-and detailed instructions. Codex selects relevant skills automatically based on
-the description field and your task.
+Codex skills live in `.agents/skills/<skill-name>/` within a repository. Per the
+official [Codex skills docs](https://developers.openai.com/codex/skills), skills
+are the authoring format for reusable workflows, while plugins are the installable
+distribution unit for reusable skills and app integrations. Each `SKILL.md` file
+defines the skill's `name`, `description`, and detailed instructions. Codex selects
+relevant skills automatically based on the description field and your task.
 
 This repository keeps `.agents/skills/` as the canonical source of truth and
 syncs exact mirrors to `.codex/skills/`, `.claude/skills/`, and the shared plugin
@@ -57,9 +61,26 @@ The routing index lives at `.agents/skills/README.md`.
 |**minecraft-ci-release**|`minecraft-ci-release/`|GitHub Actions pipelines, Modrinth/CurseForge publishing, semantic versioning|
 |**minecraft-world-generation**|`minecraft-world-generation/`|Custom biomes, dimensions, structures (datapacks + mods)|
 |**minecraft-resource-pack**|`minecraft-resource-pack/`|Textures, block/item models, sounds, animations, OptiFine CIT, shaders|
+|**minecraft-imagegen**|`minecraft-imagegen/`|Pack icons, promo art, concept textures, thumbnails, server banners, UI mockups|
 |**minecraft-server-admin**|`minecraft-server-admin/`|Server setup, JVM tuning, Docker, Velocity proxy, backups, security|
 |**minecraft-worldedit-ops**|`minecraft-worldedit-ops/`|WorldEdit ops playbooks: selections, masks, schematics, brushes, safe rollback|
 |**minecraft-essentials-ops**|`minecraft-essentials-ops/`|EssentialsX ops: kits/warps/homes, economy, permissions, moderation workflows|
+
+---
+
+## Asset Workflow Example
+
+For image-heavy Minecraft tasks, the bundle now treats `minecraft-imagegen` as a
+first-class skill instead of a thin add-on. It ships prompt-pattern references,
+asset-specific recipes, and a small brief scaffold script so generated art can be
+reviewed and handed off cleanly to `minecraft-resource-pack` when the final asset
+needs pack wiring.
+
+Example Codex prompt:
+
+```bash
+codex "Create two square pack icon concepts for a vanilla-faithful archaeology pack, save the preferred concept into the workspace, then outline the follow-up resource-pack steps."
+```
 
 ---
 
@@ -86,7 +107,9 @@ cp -r /tmp/mc-skills/.claude .
 
 ### Option C — Dual-target plugin bundle
 
-The repository now ships a plugin bundle that both Codex and Claude Code can load:
+The repository now ships a plugin bundle that both Codex and Claude Code can load.
+`minecraft-imagegen` remains conditional on the host exposing an image-generation
+tool, so treat that skill as Codex-first unless the current host documents support:
 
 ```text
 plugins/minecraft-codex-skills/
@@ -101,7 +124,7 @@ For Codex local marketplace installs:
 2. Start Codex from that repo root.
 3. Open the plugins surface with `/plugins`.
 4. Install `minecraft-codex-skills` from the repo marketplace discovered at `.agents/plugins/marketplace.json`.
-5. Restart Codex after plugin changes so the local cached copy refreshes.
+5. If a local plugin change does not appear immediately, reinstall or restart Codex. Local marketplace installs are loaded from `~/.codex/plugins/cache/<marketplace>/<plugin>/local/`, not directly from the marketplace path.
 
 For Claude Code local plugin testing:
 
@@ -130,6 +153,9 @@ Download the latest release from
 ---
 
 ## Project Structure
+
+Representative excerpt only: several other skills also ship `references/` or
+`scripts/` support assets, but the tree below highlights the main install layout.
 
 ```text
 your-project/
@@ -170,12 +196,25 @@ your-project/
         │   ├── SKILL.md
         │   └── scripts/
         │       └── validate-resource-pack.sh
+        ├── minecraft-imagegen/
+        │   ├── SKILL.md
+        │   ├── references/
+        │   │   ├── prompt-patterns.md
+        │   │   └── asset-recipes.md
+        │   └── scripts/
+        │       └── scaffold-asset-brief.sh
         ├── minecraft-server-admin/
-        │   └── SKILL.md
+        │   ├── SKILL.md
+        │   └── references/
+        │       └── deployment-checklists.md
         ├── minecraft-worldedit-ops/
-        │   └── SKILL.md
+        │   ├── SKILL.md
+        │   └── references/
+        │       └── safety-checklists.md
         └── minecraft-essentials-ops/
-            └── SKILL.md
+            ├── SKILL.md
+            └── references/
+                └── permissions-and-rollout-checklists.md
 
 # Compatibility mirrors (same content, synced by script):
 your-project/
@@ -268,6 +307,9 @@ codex "Generate a docker-compose.yml for a Paper 1.21.11 server with Aikar's \
       JVM flags, persistent volumes, and auto-restart on crash."
 ```
 
+The official Codex CLI docs still use npm for install and upgrade. Current Windows
+support is experimental, so use a WSL2 workspace for the best Windows experience.
+
 Codex reads the appropriate `SKILL.md` and picks up platform patterns, correct
 API versions, JSON schemas, and build commands automatically.
 
@@ -285,9 +327,11 @@ Use the bundled plugin for local testing or team distribution:
 claude --plugin-dir ./plugins/minecraft-codex-skills
 ```
 
-The plugin exposes the same 12 skills under the `minecraft-codex-skills` plugin
-namespace while keeping the shared `skills/` content synchronized with the raw
-skill trees.
+The plugin mirrors the same 13 skill folders under the `minecraft-codex-skills`
+plugin namespace while keeping the shared `skills/` content synchronized with
+the raw skill trees. `minecraft-imagegen` remains host-conditional and should be
+treated as Codex-first unless the current host documents equivalent image-generation
+support.
 
 ---
 
@@ -321,7 +365,11 @@ If you need to inspect or update repo structure:
 2. Keep `.codex/skills/`, `.claude/skills/`, and `plugins/minecraft-codex-skills/skills/` synchronized
 3. Run `npm run check` before publishing repo-level changes
 
-See [AGENTS.md](AGENTS.md) and [docs/skill-authoring-standard.md](docs/skill-authoring-standard.md) for the repo-specific editing model.
+See [AGENTS.md](AGENTS.md), [CONTRIBUTING.md](CONTRIBUTING.md),
+[SECURITY.md](SECURITY.md), [PRIVACY.md](PRIVACY.md),
+[TERMS.md](TERMS.md), and
+[docs/skill-authoring-standard.md](docs/skill-authoring-standard.md) for the
+repo-specific editing model.
 
 ---
 

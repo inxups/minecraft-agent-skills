@@ -19,8 +19,11 @@ This repository uses `.agents/skills/` as canonical. `.codex/skills/` is a gener
 - Keep Minecraft 1.21.x data path conventions consistent across all skills.
 - Prefer short top-level guidance and move deep examples into `references/`.
   This is a migration target and not a CI-hard requirement for legacy skills yet.
+- For new or substantially expanded multi-workflow skills, include at least one support surface beyond `SKILL.md`: `references/`, `scripts/`, or both.
+- For new or substantially expanded multi-workflow skills, include at least one end-to-end example per major workflow cluster either in `SKILL.md` or a directly linked reference file.
 - All Java snippets target Java 21.
 - Keep platform boundaries explicit (NeoForge/Fabric/Paper/Vanilla).
+- If a skill's layout changes in a way users should discover, update the repo docs that describe install paths or structure (`README.md`, `AGENTS.md`, plugin README) in the same change.
 
 ## Mirror and Audit Workflow
 

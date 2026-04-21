@@ -51,7 +51,7 @@
   <text x="694" y="146" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif" font-size="10" font-weight="400" fill="#8b949e">from the synced bundle</text>
 
   <!-- Divider label -->
-  <text x="400" y="196" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif" font-size="11" font-weight="600" fill="#6e7681" letter-spacing="1.5">12 SKILLS INCLUDED</text>
+  <text x="400" y="196" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif" font-size="11" font-weight="600" fill="#6e7681" letter-spacing="1.5">13 SKILLS INCLUDED</text>
 
   <!-- Skills grid — Row 1 -->
   <rect x="32"  y="212" width="142" height="32" rx="6" fill="none" stroke="#21262d" stroke-width="1"/>
@@ -86,15 +86,18 @@
   <text x="708" y="277" text-anchor="middle" font-family="'Courier New',monospace" font-size="11" fill="#58a6ff">multiloader</text>
 
   <!-- Skills grid — Row 3 -->
-  <rect x="186" y="300" width="220" height="32" rx="6" fill="none" stroke="#21262d" stroke-width="1"/>
-  <text x="296" y="321" text-anchor="middle" font-family="'Courier New',monospace" font-size="11" fill="#58a6ff">worldedit-ops</text>
+  <rect x="40" y="300" width="220" height="32" rx="6" fill="none" stroke="#21262d" stroke-width="1"/>
+  <text x="150" y="321" text-anchor="middle" font-family="'Courier New',monospace" font-size="11" fill="#58a6ff">worldedit-ops</text>
 
-  <rect x="414" y="300" width="220" height="32" rx="6" fill="none" stroke="#21262d" stroke-width="1"/>
-  <text x="524" y="321" text-anchor="middle" font-family="'Courier New',monospace" font-size="11" fill="#58a6ff">essentials-ops</text>
+  <rect x="290" y="300" width="220" height="32" rx="6" fill="none" stroke="#21262d" stroke-width="1"/>
+  <text x="400" y="321" text-anchor="middle" font-family="'Courier New',monospace" font-size="11" fill="#58a6ff">essentials-ops</text>
+
+  <rect x="540" y="300" width="220" height="32" rx="6" fill="none" stroke="#21262d" stroke-width="1"/>
+  <text x="650" y="321" text-anchor="middle" font-family="'Courier New',monospace" font-size="11" fill="#e3b341">imagegen</text>
 
   <!-- Sync note -->
-  <text x="400" y="356" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif" font-size="11" fill="#8b949e">Raw folders, Codex installs, and Claude plugin runs all ship the same synced skills.</text>
+  <text x="400" y="356" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif" font-size="11" fill="#8b949e">Raw folders, Codex installs, and Claude plugin runs all ship the same synced skill tree.</text>
 
   <!-- Footer -->
-  <text x="400" y="376" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif" font-size="11" fill="#8b949e">Works with Codex · Claude Code · any agent that reads .agents/skills/</text>
+  <text x="400" y="376" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif" font-size="10.5" fill="#8b949e">Built-in image generation is Codex-first; the rest of the bundle stays host-agnostic.</text>
 </svg>

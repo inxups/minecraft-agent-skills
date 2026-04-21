@@ -20,6 +20,10 @@ It is not a general economics theory guide and not a plugin coding guide.
 - `Do not use when`: the task is writing Java plugin code (`minecraft-plugin-dev`).
 - `Do not use when`: the task is WorldEdit selection/build workflows (`minecraft-worldedit-ops`).
 
+## Support Assets
+
+- Read `references/permissions-and-rollout-checklists.md` when the task is a permissions audit, economy rollout, or moderation-policy change and you need a compact preflight list.
+
 ---
 
 ## Module Overview and Install Notes

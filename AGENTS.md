@@ -1,11 +1,15 @@
 # AGENTS.md — minecraft-agent-skills Repository
 
-This repository is a collection of **12 Minecraft development skills** plus a
-dual-target plugin bundle for Codex and Claude Code.
+This repository is a collection of **13 AI agent skills**: 12 Minecraft
+development/operations skills plus one Minecraft image-generation skill, along
+with a dual-target plugin bundle for Codex and Claude Code.
 It is NOT itself a Minecraft project — it contains skill files and plugin packaging
 that get copied into Minecraft mod, plugin, or server-admin projects.
 
 ## What this repo contains
+
+Representative layout excerpts follow. They are intentionally not exhaustive;
+other skills in this repo also include `references/` and `scripts/` support assets.
 
 ```text
 .agents/skills/                ← canonical source of truth
@@ -33,12 +37,25 @@ that get copied into Minecraft mod, plugin, or server-admin projects.
 │   └── SKILL.md
 ├── minecraft-resource-pack/
 │   └── SKILL.md
+├── minecraft-imagegen/
+│   ├── SKILL.md
+│   ├── references/
+│   │   ├── prompt-patterns.md
+│   │   └── asset-recipes.md
+│   └── scripts/
+│       └── scaffold-asset-brief.sh
 ├── minecraft-server-admin/
-│   └── SKILL.md
+│   ├── SKILL.md
+│   └── references/
+│       └── deployment-checklists.md
 ├── minecraft-worldedit-ops/
-│   └── SKILL.md
+│   ├── SKILL.md
+│   └── references/
+│       └── safety-checklists.md
 └── minecraft-essentials-ops/
-    └── SKILL.md
+    ├── SKILL.md
+    └── references/
+        └── permissions-and-rollout-checklists.md
 ```
 
 Compatibility mirror (kept in sync by script/CI):
@@ -69,12 +86,25 @@ Compatibility mirror (kept in sync by script/CI):
 │   └── SKILL.md
 ├── minecraft-resource-pack/      ← Textures, models, sounds, shaders
 │   └── SKILL.md
+├── minecraft-imagegen/           ← Pack art, concept textures, thumbnails, mockups
+│   ├── SKILL.md
+│   ├── references/
+│   │   ├── prompt-patterns.md
+│   │   └── asset-recipes.md
+│   └── scripts/
+│       └── scaffold-asset-brief.sh
 ├── minecraft-server-admin/       ← Server setup, JVM tuning, Docker, Velocity
-│   └── SKILL.md
+│   ├── SKILL.md
+│   └── references/
+│       └── deployment-checklists.md
 ├── minecraft-worldedit-ops/      ← WorldEdit operations and safe edit workflows
-│   └── SKILL.md
+│   ├── SKILL.md
+│   └── references/
+│       └── safety-checklists.md
 └── minecraft-essentials-ops/     ← EssentialsX operations and moderation/economy policy
-    └── SKILL.md
+    ├── SKILL.md
+    └── references/
+        └── permissions-and-rollout-checklists.md
 ```
 
 Claude Code mirror (kept in sync by script/CI):
@@ -105,12 +135,25 @@ Claude Code mirror (kept in sync by script/CI):
 │   └── SKILL.md
 ├── minecraft-resource-pack/      ← Textures, models, sounds, shaders
 │   └── SKILL.md
+├── minecraft-imagegen/           ← Pack art, concept textures, thumbnails, mockups
+│   ├── SKILL.md
+│   ├── references/
+│   │   ├── prompt-patterns.md
+│   │   └── asset-recipes.md
+│   └── scripts/
+│       └── scaffold-asset-brief.sh
 ├── minecraft-server-admin/       ← Server setup, JVM tuning, Docker, Velocity
-│   └── SKILL.md
+│   ├── SKILL.md
+│   └── references/
+│       └── deployment-checklists.md
 ├── minecraft-worldedit-ops/      ← WorldEdit operations and safe edit workflows
-│   └── SKILL.md
+│   ├── SKILL.md
+│   └── references/
+│       └── safety-checklists.md
 └── minecraft-essentials-ops/     ← EssentialsX operations and moderation/economy policy
-    └── SKILL.md
+    ├── SKILL.md
+    └── references/
+        └── permissions-and-rollout-checklists.md
 ```
 
 Dual-target plugin bundle (kept in sync by script/CI):
@@ -131,6 +174,7 @@ plugins/minecraft-codex-skills/
     ├── minecraft-ci-release/
     ├── minecraft-world-generation/
     ├── minecraft-resource-pack/
+    ├── minecraft-imagegen/
     ├── minecraft-server-admin/
     ├── minecraft-worldedit-ops/
     └── minecraft-essentials-ops/
@@ -152,6 +196,7 @@ The table below maps task types to which skill(s) to load:
 |GitHub Actions CI, Modrinth/CurseForge auto-publish, semantic versioning|`minecraft-ci-release`|
 |Custom biomes, dimensions, structures (datapack or mod)|`minecraft-world-generation`|
 |Texture packs, block/item models, animated textures, shaders|`minecraft-resource-pack`|
+|Pack art, pack icons, thumbnails, concept textures, and UI mockups|`minecraft-imagegen`|
 |Server launch flags, `server.properties`, Docker, Velocity proxy|`minecraft-server-admin`|
 |WorldEdit selections, schematics, brushes, safe rollback workflows|`minecraft-worldedit-ops`|
 |EssentialsX commands, economy, kits/warps/homes, moderation and permissions|`minecraft-essentials-ops`|
