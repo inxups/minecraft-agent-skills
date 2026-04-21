@@ -5,6 +5,21 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [2.4.1] - 2026-04-21
+
+### Added
+
+- New `minecraft-imagegen` skill for Minecraft pack art, thumbnails, concept textures, and UI/mockup workflows using Codex's built-in image generation tool
+- Public repo-policy docs at `CONTRIBUTING.md`, `SECURITY.md`, `PRIVACY.md`, and `TERMS.md` to make the open-source maintenance/disclosure model explicit
+- Bundled support assets for previously thin skills: image-generation prompt/asset references plus a brief scaffold script, and compact rollout/safety references for server-admin, WorldEdit ops, and EssentialsX ops
+
+### Changed
+
+- Updated top-level docs and plugin docs to reflect the 13-skill collection, current Codex skills/plugin terminology, and Codex local plugin cache behavior
+- Enriched the Codex plugin manifest with install-surface metadata recommended by current plugin docs, and hardened plugin/community validation around that metadata
+- Tightened the repo's skill authoring standard so new multi-workflow skills are expected to ship support assets and end-to-end examples, with structure/docs updated in the same change
+- Bumped package and plugin metadata to version `2.4.1` and refreshed the README explainer asset to reflect all 13 skills plus Codex-first image-generation support
+
 ## [2.4.0] - 2026-04-04
 
 ### Added

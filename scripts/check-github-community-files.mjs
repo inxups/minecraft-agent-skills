@@ -59,6 +59,33 @@ if (prTemplate) {
   }
 }
 
+const contributingPath = "CONTRIBUTING.md";
+const contributing = readUtf8(contributingPath);
+if (contributing) {
+  for (const token of ["npm run check", ".agents/skills/", "CHANGELOG.md"]) {
+    if (!contributing.includes(token)) {
+      addError(contributingPath, `missing required contributor guidance: ${token}`);
+    }
+  }
+}
+
+const securityPath = "SECURITY.md";
+const security = readUtf8(securityPath);
+if (security) {
+  for (const token of ["Do not report security vulnerabilities in a public GitHub issue", "GitHub Security", "private"]) {
+    if (!security.includes(token)) {
+      addError(securityPath, `missing required security disclosure guidance: ${token}`);
+    }
+  }
+}
+
+for (const docPath of ["PRIVACY.md", "TERMS.md"]) {
+  const source = readUtf8(docPath);
+  if (source && source.trim().length < 80) {
+    addError(docPath, "must contain substantive public documentation");
+  }
+}
+
 function validateIssueForm(relativePath, expectedName) {
   const doc = parseYamlFile(relativePath);
   if (!doc || typeof doc !== "object") return;

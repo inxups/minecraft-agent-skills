@@ -1,9 +1,10 @@
 {
   "name": "minecraft-codex-skills",
-  "description": "A dual-target Minecraft development skills bundle for Claude Code and Codex.",
-  "version": "2.4.0",
+  "description": "A dual-target Minecraft development skills bundle for Claude Code and Codex; image-generation workflows are Codex-first and host-conditional.",
+  "version": "2.4.1",
   "author": {
-    "name": "Jahrome907"
+    "name": "Jahrome907",
+    "url": "https://github.com/Jahrome907"
   },
   "homepage": "https://github.com/Jahrome907/minecraft-agent-skills",
   "repository": "https://github.com/Jahrome907/minecraft-agent-skills",
