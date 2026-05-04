@@ -1,10 +1,6 @@
 ---
 name: minecraft-imagegen
-description: >
-  Generate Minecraft-focused raster assets with Codex's built-in image generation
-  tool, including pack icons, promo art, concept textures, thumbnails, server
-  banners, and UI mockups. Use when the deliverable should be a bitmap image
-  rather than JSON models, SVG, or code-native assets.
+description: "Generate Minecraft-focused raster assets with Codex's built-in image generation tool, including pack icons, promo art, concept textures, thumbnails, server banners, and UI mockups. Use when the deliverable should be a bitmap image rather than JSON models, SVG, or code-native assets."
 ---
 
 # Minecraft Image Generation Skill

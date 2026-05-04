@@ -19,6 +19,10 @@ Codex supports that directly, while other hosts should treat that skill as condi
 The repository is branded as `minecraft-agent-skills`; the bundled plugin/package
 identifier remains `minecraft-codex-skills` for marketplace and install compatibility.
 
+This is an independent, community-maintained skills bundle. It is not affiliated
+with, endorsed by, sponsored by, or approved by Mojang Studios, Microsoft, or the
+official Minecraft project.
+
 <!-- markdownlint-disable MD033 -->
 <p align="center">
       <img src="docs/assets/how-it-works.svg" alt="How It Works — choose raw skills or plugin install, load the 13-skill bundle into your agent, assign a task, and let the right skill activate; image generation is Codex-first" width="100%"/>

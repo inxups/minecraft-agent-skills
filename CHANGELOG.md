@@ -5,6 +5,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- Normalized SKILL.md frontmatter descriptions to single-line quoted format across all 13 skills, per Agent Skills open standard and official Codex/Claude Code documentation best practices (avoids block-scalar whitespace-folding ambiguity during truncation)
+- Added explicit "Use when..." routing trigger to `minecraft-ci-release` description, which was the only skill missing one
+- Improved `minecraft-datapack`: removed redundant "What Is a Datapack?" intro section and full selector reference (deferred to `minecraft-commands-scripting`); condensed execute subcommands to datapack-specific patterns (chained execute, store result, dimension routing); renamed "NBT and storage" to "Storage NBT (datapack-specific global state)"; added validator step to development workflow before `/reload`
+- Improved `minecraft-essentials-ops`: removed redundant "Scope and Positioning" prose section; fixed duplicate `1.` numbered list bug in sign shops runbook; added separate sign shop `[Buy]`/`[Sell]` format examples; added kit `config.yml` YAML example; added troubleshooting hints to mute, jail, and tempban workflows; fixed duplicate `1.` at end of Safe Config Rollout runbook (now correctly numbered 1–6)
+- Improved `minecraft-plugin-dev`: refined scheduler inline comments for clarity; reorganized "Build & Run" into numbered "Build, Validate, and Run" steps (build → validate → fix → deploy); merged separate "Validator Script" section into the build steps
+- Improved `minecraft-testing`: removed boilerplate `@BeforeEach` empty placeholder; removed generic MockBukkit intro paragraph; added four-step GameTest setup checklist (structure files, run server, check output, fix timeouts) before the Running GameTests section
+- Improved `minecraft-world-generation`: merged "Testing Worldgen" and "Validator Script" sections into a unified seven-step "Development Workflow" (edit → validate → fix → in-game biome testing → dimension testing → check logs → reload note with fresh-world/chunk guidance)
+- Synced all description and content changes to `.codex/skills/`, `.claude/skills/`, and `plugins/minecraft-codex-skills/skills/` mirrors
+- Documented repository independence from Mojang/Microsoft in `README.md` and `TERMS.md`, and set least-privilege `contents: read` permissions on the skills audit workflow
+
 ## [2.4.1] - 2026-04-21
 
 ### Added

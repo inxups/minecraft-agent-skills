@@ -1,11 +1,6 @@
 ---
 name: minecraft-worldedit-ops
-description: >
-  Operate WorldEdit safely and efficiently for Minecraft 1.21.x server build/admin workflows.
-  Covers selection mechanics, region operations, masks and patterns, clipboards and schematics,
-  brushes and terraforming, undo/history safety, and practical runbooks for spawn edits, arena
-  resets, block cleanup, and path shaping. Use for command-driven world operations, not plugin
-  development.
+description: "Operate WorldEdit safely and efficiently for Minecraft 1.21.x server build/admin workflows. Covers selection mechanics, region operations, masks and patterns, clipboards and schematics, brushes and terraforming, undo/history safety, and practical runbooks for spawn edits, arena resets, block cleanup, and path shaping. Use for command-driven world operations, not plugin development."
 ---
 
 # Minecraft WorldEdit Operations Skill

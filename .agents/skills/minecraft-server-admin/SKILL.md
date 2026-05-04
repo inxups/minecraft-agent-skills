@@ -1,12 +1,6 @@
 ---
 name: minecraft-server-admin
-description: >
-  Set up, configure, and operate Minecraft Java Edition servers for 1.21.x across
-  Paper, Purpur, Folia, Velocity networks, and modded (Fabric/NeoForge) deployments.
-  Covers deployment selection, performance tuning playbooks, plugin operations,
-  proxy/forwarding setup, backup and recovery runbooks, live incident troubleshooting,
-  Docker/Pterodactyl patterns, and security hardening. Use for server infrastructure
-  and operations, not plugin or mod feature development.
+description: "Set up, configure, and operate Minecraft Java Edition servers for 1.21.x across Paper, Purpur, Folia, Velocity networks, and modded (Fabric/NeoForge) deployments. Covers deployment selection, performance tuning playbooks, plugin operations, proxy/forwarding setup, backup and recovery runbooks, live incident troubleshooting, Docker/Pterodactyl patterns, and security hardening. Use for server infrastructure and operations, not plugin or mod feature development."
 ---
 
 # Minecraft Server Administration Skill

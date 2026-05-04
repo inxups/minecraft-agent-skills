@@ -1,18 +1,11 @@
 ---
 name: minecraft-essentials-ops
-description: >
-  Operate EssentialsX on Minecraft 1.21.x servers with safe, practical admin workflows.
-  Covers module scope, install and version-alignment checks, Vault economy integration,
-  kits/warps/homes/spawn operations, permissions patterns, moderation workflows (mute, jail,
-  tempban), and common config pitfalls. Use for EssentialsX operations, not plugin development.
+description: "Operate EssentialsX on Minecraft 1.21.x servers with safe, practical admin workflows. Covers module scope, install and version-alignment checks, Vault economy integration, kits/warps/homes/spawn operations, permissions patterns, moderation workflows (mute, jail, tempban), and common config pitfalls. Use when the task involves EssentialsX commands, config, permissions, economy, or moderation operations — not plugin development or general server deployment."
 ---
 
 # Minecraft EssentialsX Operations Skill
 
-## Scope and Positioning
-
-This skill focuses on **operating EssentialsX** on running servers.
-It is not a general economics theory guide and not a plugin coding guide.
+## Skill Scope
 
 ### Routing Boundaries
 - `Use when`: the task is EssentialsX command, config, permissions, economy, or moderation operations.
@@ -77,12 +70,41 @@ Use admin economy commands through staff roles only.
 If using EssentialsX signs and economy interactions:
 
 1. Define pricing policy:
-- starter-tier prices
-- anti-inflation sinks
-- admin-only item exceptions
+   - starter-tier prices
+   - anti-inflation sinks
+   - admin-only item exceptions
+2. Restrict sign creation permissions to trusted groups.
+3. Validate buy/sell math after config changes.
 
-1. Restrict sign creation permissions to trusted groups.
-1. Validate buy/sell math after config changes.
+### Sign shop formats
+
+```
+[Buy]
+<quantity>
+<item>
+<price>
+
+[Sell]
+<quantity>
+<item>
+<price>
+```
+
+Example (stone at spawn market):
+```
+[Buy]
+32
+stone
+$50
+
+[Sell]
+32
+stone
+$20
+```
+
+Use separate `[Buy]` and `[Sell]` signs when you want different buy and sell
+prices. Line 4 is a single transaction price for that sign.
 
 Operational guardrails:
 - never enable broad player access to unrestricted admin shop signs
@@ -98,6 +120,17 @@ Typical kit lifecycle:
 1. create/edit kit definition
 2. set cooldown and permission
 3. test with player-rank account
+
+Kit entry in `config.yml`:
+```yaml
+kits:
+  starter:
+    delay: 86400
+    items:
+      - stone 64
+      - oak_planks 32
+      - bread 16
+```
 
 Common commands:
 
@@ -185,6 +218,8 @@ Practice:
 - include reason and duration
 - log escalation path for repeat behavior
 
+Troubleshooting: mute not applying → verify `essentials.mute` permission and that `EssentialsXChat` is installed for chat filtering.
+
 ## Workflow: Jail
 
 ```mcfunction
@@ -197,6 +232,8 @@ Practice:
 - define clear jail reasons
 - pair with rollback/repair actions when relevant
 
+Troubleshooting: jail not working → confirm jail location exists with `/setjail intake` and player has no bypass permission.
+
 ## Workflow: Temporary Ban
 
 ```mcfunction
@@ -208,6 +245,8 @@ Practice:
 Practice:
 - align durations with policy tiers
 - document evidence and staff actor
+
+Troubleshooting: tempban not sticking → check `essentials.tempban` permission and that no override plugin (e.g., LiteBans) is conflicting.
 
 ---
 
@@ -234,11 +273,11 @@ Hardening checklist:
 3. Reload only if plugin docs explicitly support live reload for changed sections.
 4. Prefer maintenance restart for sensitive changes.
 5. Validate:
-- login flow
-- homes/warps
-- economy transactions
-- moderation commands
-1. Keep rollback bundle ready for immediate restore.
+   - login flow
+   - homes/warps
+   - economy transactions
+   - moderation commands
+6. Keep rollback bundle ready for immediate restore.
 
 ---
 
