@@ -5,6 +5,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [2.4.2] - 2026-05-04
+
 ### Changed
 
 - Normalized SKILL.md frontmatter descriptions to single-line quoted format across all 13 skills, per Agent Skills open standard and official Codex/Claude Code documentation best practices (avoids block-scalar whitespace-folding ambiguity during truncation)

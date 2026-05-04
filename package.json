@@ -1,7 +1,7 @@
 {
   "name": "minecraft-agent-skills",
   "private": true,
-  "version": "2.4.1",
+  "version": "2.4.2",
   "type": "module",
   "scripts": {
     "audit:skills": "node ./scripts/audit-skills.mjs",
