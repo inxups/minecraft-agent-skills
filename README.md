@@ -176,6 +176,8 @@ your-project/
         │       └── check-build.sh
         ├── minecraft-plugin-dev/
         │   ├── SKILL.md
+        │   ├── references/
+        │   │   └── runtime-patterns.md
         │   └── scripts/
         │       └── validate-plugin-layout.sh
         ├── minecraft-datapack/

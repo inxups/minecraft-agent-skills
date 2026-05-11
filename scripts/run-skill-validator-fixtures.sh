@@ -19,12 +19,12 @@ run_and_capture() {
     cat "$output_file"
     rm -f "$output_file"
     return 0
+  else
+    local status=$?
+    cat "$output_file"
+    rm -f "$output_file"
+    return "$status"
   fi
-
-  local status=$?
-  cat "$output_file"
-  rm -f "$output_file"
-  return "$status"
 }
 
 expect_pass() {

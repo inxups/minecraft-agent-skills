@@ -60,6 +60,7 @@ WARNINGS=0
 pass() { echo "$PASS $*"; }
 warn() { echo "$WARN $*"; WARNINGS=$((WARNINGS + 1)); }
 fail() { echo "$FAIL $*"; FAILURES=$((FAILURES + 1)); }
+strip_cr() { printf '%s' "${1%$'\r'}"; }
 
 check_json() {
   local file="$1"
@@ -196,14 +197,17 @@ while IFS= read -r -d '' model_file; do
   ns="${rel%%/*}"
 
   while IFS= read -r tex; do
+    tex="$(strip_cr "$tex")"
     resolve_texture "$ns" "$tex"
   done < <(jq -r '(.textures // {} | to_entries[]?.value // empty)' "$model_file")
 
   while IFS= read -r parent; do
+    parent="$(strip_cr "$parent")"
     resolve_model "$ns" "$parent"
   done < <(jq -r '.parent? // empty' "$model_file")
 
   while IFS= read -r over_model; do
+    over_model="$(strip_cr "$over_model")"
     resolve_model "$ns" "$over_model"
   done < <(jq -r '.overrides[]?.model? // empty' "$model_file")
 done < <(find "$ROOT/assets" -type f -path '*/models/*.json' -print0 2>/dev/null)
@@ -212,6 +216,7 @@ while IFS= read -r -d '' blockstate_file; do
   rel="${blockstate_file#"$ROOT/assets/"}"
   ns="${rel%%/*}"
   while IFS= read -r model_ref; do
+    model_ref="$(strip_cr "$model_ref")"
     resolve_model "$ns" "$model_ref"
   done < <(jq -r '(
       .variants? // {} | .. | objects | .model? // empty
@@ -225,6 +230,7 @@ while IFS= read -r -d '' sounds_file; do
   rel="${sounds_file#"$ROOT/assets/"}"
   ns="${rel%%/*}"
   while IFS= read -r sound_ref; do
+    sound_ref="$(strip_cr "$sound_ref")"
     resolve_sound "$ns" "$sound_ref"
   done < <(jq -r '.. | objects | select(has("sounds")) | .sounds[]? | if type == "string" then . else .name? // empty end' "$sounds_file")
 done < <(find "$ROOT/assets" -type f -name 'sounds.json' -print0 2>/dev/null)
@@ -234,6 +240,7 @@ while IFS= read -r -d '' font_file; do
   rel="${font_file#"$ROOT/assets/"}"
   ns="${rel%%/*}"
   while IFS= read -r font_ref; do
+    font_ref="$(strip_cr "$font_ref")"
     [[ -z "$font_ref" ]] && continue
     if [[ "$font_ref" == *:* ]]; then
       target_ns="${font_ref%%:*}"

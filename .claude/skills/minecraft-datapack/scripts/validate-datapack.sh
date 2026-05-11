@@ -60,6 +60,7 @@ WARNINGS=0
 pass() { echo "$PASS $*"; }
 warn() { echo "$WARN $*"; WARNINGS=$((WARNINGS + 1)); }
 fail() { echo "$FAIL $*"; FAILURES=$((FAILURES + 1)); }
+strip_cr() { printf '%s' "${1%$'\r'}"; }
 
 check_json() {
   local file="$1"
@@ -165,6 +166,7 @@ while IFS= read -r -d '' tag_file; do
   fi
 
   while IFS= read -r ref; do
+    ref="$(strip_cr "$ref")"
     [[ -z "$ref" ]] && continue
     resolve_function_ref "$tag_file" "$ref"
   done < <(jq -r '.values[]? | strings' "$tag_file")

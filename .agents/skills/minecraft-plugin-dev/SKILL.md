@@ -22,6 +22,10 @@ description: "Develop Minecraft server plugins using the Paper/Bukkit/Spigot API
 - `Do not use when`: the task requires client-side installable mods or loader APIs (`minecraft-modding` / `minecraft-multiloader`).
 - `Do not use when`: the task is pure vanilla datapack/command content (`minecraft-datapack` / `minecraft-commands-scripting`).
 
+## Bundled References
+
+- Read `references/runtime-patterns.md` when the task touches scheduling, Folia support, PDC, Adventure/MiniMessage, YAML config, Vault, or Paper-specific APIs.
+
 ---
 
 ## Project Setup
@@ -351,77 +355,12 @@ public class MyCommand implements CommandExecutor, TabCompleter {
 ## Schedulers
 
 For classic Paper plugins, `BukkitScheduler` is still fine. If you claim Folia support,
-move entity, region, and global work onto the Folia-aware schedulers instead of assuming
-one global main thread.
+route player, entity, region, global, and async work through the matching Folia-aware
+scheduler. Keep scheduling behind a small project-local interface when one plugin must
+support both Paper and Folia.
 
-### Synchronous (runs on main thread)
-```java
-// Run once after 20 ticks (1 second)
-plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
-    // Bukkit API access is safe here
-}, 20L);
-
-// Repeating: starts after 0 ticks, runs every 40 ticks
-plugin.getServer().getScheduler().runTaskTimer(plugin, () -> {
-    // runs on main thread
-}, 0L, 40L);
-```
-
-### Asynchronous (for I/O / database work)
-```java
-// Never run blocking I/O on the main thread
-plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
-    // File I/O, HTTP requests, DB queries are safe here
-    String data = fetchFromDatabase();
-    // Switch back to main thread for Bukkit API calls
-    plugin.getServer().getScheduler().runTask(plugin, () -> {
-        Bukkit.broadcastMessage(data);
-    });
-});
-```
-
-### BukkitRunnable (cancelable tasks)
-```java
-new BukkitRunnable() {
-    int count = 0;
-
-    @Override
-    public void run() {
-        count++;
-        if (count >= 10) {
-            cancel(); // stop after 10 executions
-            return;
-        }
-        // task logic
-    }
-}.runTaskTimer(plugin, 0L, 20L);
-```
-
-### Folia-safe scheduling
-```java
-// Player-bound work: stays with the player's owning region
-player.getScheduler().run(plugin, task -> {
-    player.sendActionBar(Component.text("Checkpoint reached"));
-}, null);
-
-// Location / chunk-bound work
-plugin.getServer().getRegionScheduler().run(plugin, location, task -> {
-    location.getBlock().setType(Material.GOLD_BLOCK);
-});
-
-// Global coordination that is not tied to one region
-plugin.getServer().getGlobalRegionScheduler().run(plugin, task -> {
-    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "save-all");
-});
-
-// Async I/O remains on the async scheduler
-plugin.getServer().getAsyncScheduler().runNow(plugin, task -> {
-    writeAuditLog();
-});
-```
-
-If you need to support both Paper and Folia, hide scheduling behind your own interface
-instead of scattering scheduler calls throughout listeners and commands.
+See `references/runtime-patterns.md` for copy-ready sync, async, cancelable, and
+Folia-safe scheduler examples.
 
 ---
 
@@ -430,92 +369,23 @@ instead of scattering scheduler calls throughout listeners and commands.
 PDC stores arbitrary data on any `PersistentDataHolder` (players, entities, items, chunks).
 Data is saved with the world and persists across restarts.
 
-```java
-import org.bukkit.NamespacedKey;
-import org.bukkit.persistence.PersistentDataType;
+Create `NamespacedKey` instances once, keep data types stable after release, and use
+PDC for small metadata rather than large datasets. Prefer config files or a database
+for large or query-heavy plugin state.
 
-// Define keys (reuse instances — create once in your plugin class)
-NamespacedKey killKey = new NamespacedKey(plugin, "kill_count");
-NamespacedKey flagKey = new NamespacedKey(plugin, "vip");
-
-// Write
-player.getPersistentDataContainer().set(killKey, PersistentDataType.INTEGER, 42);
-player.getPersistentDataContainer().set(flagKey, PersistentDataType.BOOLEAN, true);
-
-// Read
-int kills = player.getPersistentDataContainer()
-    .getOrDefault(killKey, PersistentDataType.INTEGER, 0);
-
-boolean isVip = player.getPersistentDataContainer()
-    .getOrDefault(flagKey, PersistentDataType.BOOLEAN, false);
-
-// Check existence
-boolean hasData = player.getPersistentDataContainer().has(killKey, PersistentDataType.INTEGER);
-
-// Remove
-player.getPersistentDataContainer().remove(killKey);
-```
-
-### PDC on ItemStack
-```java
-ItemStack item = new ItemStack(Material.DIAMOND_SWORD);
-item.editMeta(meta -> meta.getPersistentDataContainer().set(
-    new NamespacedKey(plugin, "custom_id"),
-    PersistentDataType.STRING,
-    "special_sword"
-));
-```
-
-### PDC on chunks or worlds
-```java
-NamespacedKey arenaKey = new NamespacedKey(plugin, "arena_id");
-
-chunk.getPersistentDataContainer().set(arenaKey, PersistentDataType.STRING, "spawn");
-
-String arenaId = chunk.getPersistentDataContainer()
-    .getOrDefault(arenaKey, PersistentDataType.STRING, "unknown");
-```
+See `references/runtime-patterns.md` for player, item, chunk, and world PDC examples.
 
 ---
 
 ## Adventure Text Components
 
 Paper uses [Adventure](https://docs.advntr.dev/) natively for all text. No legacy chat colors.
+Use `Component` builders for code-owned messages and MiniMessage for config-driven
+messages. Avoid legacy `ChatColor` unless the target project already depends on it
+for compatibility.
 
-```java
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextDecoration;
-import net.kyori.adventure.text.event.ClickEvent;
-import net.kyori.adventure.text.event.HoverEvent;
-
-// Simple components
-player.sendMessage(Component.text("Hello!", NamedTextColor.GREEN));
-player.sendMessage(Component.text("Bold warning", NamedTextColor.RED, TextDecoration.BOLD));
-
-// Compound component
-Component message = Component.text()
-    .append(Component.text("[Click Me]", NamedTextColor.AQUA)
-        .clickEvent(ClickEvent.runCommand("/myplugin info"))
-        .hoverEvent(HoverEvent.showText(Component.text("Run /myplugin info"))))
-    .append(Component.text(" to see plugin info.", NamedTextColor.WHITE))
-    .build();
-player.sendMessage(message);
-
-// MiniMessage (recommended for config-driven text)
-import net.kyori.adventure.text.minimessage.MiniMessage;
-Component parsed = MiniMessage.miniMessage().deserialize(
-    "<gradient:red:yellow>Hello World</gradient>"
-);
-
-// Titles / action bars
-player.showTitle(Title.title(
-    Component.text("Welcome!", NamedTextColor.GOLD),
-    Component.text("To " + player.getWorld().getName(), NamedTextColor.YELLOW),
-    Title.Times.times(Duration.ofMillis(500), Duration.ofSeconds(3), Duration.ofMillis(500))
-));
-player.sendActionBar(Component.text("Health: " + player.getHealth(), NamedTextColor.RED));
-```
+See `references/runtime-patterns.md` for simple messages, hover/click events,
+MiniMessage parsing, titles, and action bars.
 
 ---
 
@@ -536,109 +406,35 @@ database:
 ```
 
 ### Accessing config values
-```java
-// In onEnable():
-saveDefaultConfig(); // writes config.yml if absent
-
-// Reading values
-int maxPlayers = getConfig().getInt("settings.max-players", 20);
-String message  = getConfig().getString("settings.welcome-message", "Welcome!");
-boolean enabled = getConfig().getBoolean("features.pvp", true);
-
-// Reloading
-reloadConfig();
-
-// Writing values
-getConfig().set("settings.max-players", 30);
-saveConfig();
-```
+Call `saveDefaultConfig()` in `onEnable()`, provide explicit defaults when reading
+values, and validate config shape before starting long-running tasks.
 
 ### Custom config file
-```java
-File customFile = new File(getDataFolder(), "data.yml");
-if (!customFile.exists()) {
-    saveResource("data.yml", false); // copies from resources/
-}
-FileConfiguration customConfig = YamlConfiguration.loadConfiguration(customFile);
-customConfig.set("some.key", "value");
-customConfig.save(customFile);
-```
+Use custom YAML files only when separating user config from mutable plugin data is
+worth the extra file handling. Keep blocking disk writes off hot event paths.
+
+See `references/runtime-patterns.md` for config read/write and custom YAML examples.
 
 ---
 
 ## Vault Integration (Economy / Permissions)
 
-```java
-import net.milkbowl.vault.economy.Economy;
-import org.bukkit.plugin.RegisteredServiceProvider;
+Declare Vault as `compileOnly`, soft-depend on it in plugin metadata, and disable
+economy features cleanly when the service provider is unavailable. Never assume a
+Vault-compatible economy plugin is installed just because Vault itself is present.
 
-public class MyPlugin extends JavaPlugin {
-    private Economy economy;
-
-    @Override
-    public void onEnable() {
-        if (!setupEconomy()) {
-            getLogger().severe("Vault not found! Economy features disabled.");
-        }
-    }
-
-    private boolean setupEconomy() {
-        if (getServer().getPluginManager().getPlugin("Vault") == null) return false;
-        RegisteredServiceProvider<Economy> rsp =
-            getServer().getServicesManager().getRegistration(Economy.class);
-        if (rsp == null) return false;
-        economy = rsp.getProvider();
-        return economy != null;
-    }
-
-    // Usage
-    public void chargePlayer(Player player, double amount) {
-        if (economy != null && economy.has(player, amount)) {
-            economy.withdrawPlayer(player, amount);
-        }
-    }
-}
-```
+See `references/runtime-patterns.md` for a minimal economy setup and charge example.
 
 ---
 
 ## Paper-Specific APIs
 
-### Async chunk loading
-```java
-// Paper: load chunk without blocking main thread
-world.getChunkAtAsync(x, z).thenAccept(chunk -> {
-    // runs on main thread after chunk loads
-    chunk.getBlock(0, 64, 0).setType(Material.GOLD_BLOCK);
-});
-```
+Use Paper APIs when they remove main-thread blocking or simplify Adventure-native
+behavior. Keep optional plugin integrations behind presence checks and metadata
+soft-dependencies.
 
-### Custom item meta
-```java
-// Set custom model data (for resource packs)
-ItemStack item = new ItemStack(Material.STICK);
-ItemMeta meta = item.getItemMeta();
-meta.setCustomModelData(1001);
-meta.displayName(Component.text("Magic Wand", NamedTextColor.LIGHT_PURPLE));
-item.setItemMeta(meta);
-```
-
-### Player profile (async)
-```java
-// Paper: async profile lookup (no blocking main thread)
-Bukkit.createProfile(UUID.fromString("...")).update().thenAccept(profile -> {
-    String name = profile.getName();
-});
-```
-
-### GriefPrevention / WorldGuard bypass
-```java
-// Check if location is protected (WorldGuard example)
-// Always soft-depend on protection plugins
-if (getServer().getPluginManager().getPlugin("WorldGuard") != null) {
-    // use WorldGuard API
-}
-```
+See `references/runtime-patterns.md` for async chunk loading, custom item meta,
+profile lookup, and protection-plugin integration examples.
 
 ---
 

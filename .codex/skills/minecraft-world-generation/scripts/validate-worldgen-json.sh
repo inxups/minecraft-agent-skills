@@ -64,6 +64,7 @@ WARNINGS=0
 pass() { echo "$PASS $*"; }
 warn() { echo "$WARN $*"; WARNINGS=$((WARNINGS + 1)); }
 fail() { echo "$FAIL $*"; FAILURES=$((FAILURES + 1)); }
+strip_cr() { printf '%s' "${1%$'\r'}"; }
 
 TOTAL_SUPPORTED_FILES=0
 
@@ -289,6 +290,7 @@ while IFS= read -r -d '' dimension_file; do
   rel="${dimension_file#"$ROOT/data/"}"
   ns="${rel%%/*}"
   type_ref="$(jq -r '.type? // empty' "$dimension_file")"
+  type_ref="$(strip_cr "$type_ref")"
 
   if [[ -z "$type_ref" ]]; then
     fail "dimension missing .type: ${dimension_file#$ROOT/}"
@@ -304,6 +306,7 @@ while IFS= read -r -d '' dimension_file; do
   fi
 
   settings_ref="$(jq -r 'if (.generator?.type? // empty) == "minecraft:noise" and (.generator?.settings? | type) == "string" then .generator.settings else empty end' "$dimension_file")"
+  settings_ref="$(strip_cr "$settings_ref")"
   if [[ -z "$settings_ref" ]]; then
     continue
   fi
@@ -325,6 +328,7 @@ while IFS= read -r -d '' pf_file; do
   rel="${pf_file#"$ROOT/data/"}"
   ns="${rel%%/*}"
   feature_ref="$(jq -r '.feature? // empty' "$pf_file")"
+  feature_ref="$(strip_cr "$feature_ref")"
 
   if [[ -z "$feature_ref" ]]; then
     fail "placed_feature missing .feature: ${pf_file#$ROOT/}"
@@ -349,6 +353,7 @@ while IFS= read -r -d '' ss_file; do
   rel="${ss_file#"$ROOT/data/"}"
   ns="${rel%%/*}"
   while IFS= read -r sref; do
+    sref="$(strip_cr "$sref")"
     [[ -z "$sref" ]] && continue
     sid="$(split_ref "$ns" "$sref")"
     if [[ -n "${STRUCTURES[$sid]:-}" ]]; then
@@ -364,6 +369,7 @@ while IFS= read -r -d '' biome_file; do
   rel="${biome_file#"$ROOT/data/"}"
   ns="${rel%%/*}"
   while IFS= read -r fref; do
+    fref="$(strip_cr "$fref")"
     [[ -z "$fref" ]] && continue
     if [[ "$fref" == \#* ]]; then
       warn "tag reference not resolved in biome file: ${biome_file#$ROOT/} -> $fref"
@@ -385,6 +391,7 @@ while IFS= read -r -d '' mod_file; do
   ns="${rel%%/*}"
 
   while IFS= read -r ref; do
+    ref="$(strip_cr "$ref")"
     [[ -z "$ref" ]] && continue
     if [[ "$ref" == \#* ]]; then
       warn "tag reference not resolved in biome_modifier: ${mod_file#$ROOT/} -> $ref"
@@ -400,6 +407,7 @@ while IFS= read -r -d '' mod_file; do
   done < <(jq -r '(.features? // empty), (.features[]? // empty)' "$mod_file")
 
   while IFS= read -r ref; do
+    ref="$(strip_cr "$ref")"
     [[ -z "$ref" ]] && continue
     rid="$(split_ref "$ns" "$ref")"
     if [[ -n "${STRUCTURES[$rid]:-}" ]]; then

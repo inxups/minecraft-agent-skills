@@ -22,7 +22,11 @@ other skills in this repo also include `references/` and `scripts/` support asse
 │   └── scripts/
 │       └── check-build.sh
 ├── minecraft-plugin-dev/
-│   └── SKILL.md
+│   ├── SKILL.md
+│   ├── references/
+│   │   └── runtime-patterns.md
+│   └── scripts/
+│       └── validate-plugin-layout.sh
 ├── minecraft-datapack/
 │   └── SKILL.md
 ├── minecraft-commands-scripting/
@@ -71,7 +75,11 @@ Compatibility mirror (kept in sync by script/CI):
 │   └── scripts/
 │       └── check-build.sh
 ├── minecraft-plugin-dev/         ← Paper/Bukkit server plugin development
-│   └── SKILL.md
+│   ├── SKILL.md
+│   ├── references/
+│   │   └── runtime-patterns.md
+│   └── scripts/
+│       └── validate-plugin-layout.sh
 ├── minecraft-datapack/           ← Vanilla datapack authoring (no Java)
 │   └── SKILL.md
 ├── minecraft-commands-scripting/ ← Vanilla commands, scoreboards, NBT, RCON
@@ -120,7 +128,11 @@ Claude Code mirror (kept in sync by script/CI):
 │   └── scripts/
 │       └── check-build.sh
 ├── minecraft-plugin-dev/         ← Paper/Bukkit server plugin development
-│   └── SKILL.md
+│   ├── SKILL.md
+│   ├── references/
+│   │   └── runtime-patterns.md
+│   └── scripts/
+│       └── validate-plugin-layout.sh
 ├── minecraft-datapack/           ← Vanilla datapack authoring (no Java)
 │   └── SKILL.md
 ├── minecraft-commands-scripting/ ← Vanilla commands, scoreboards, NBT, RCON
@@ -220,7 +232,7 @@ When Minecraft releases a new version, update the following files:
 2. **`minecraft-modding/references/neoforge-api.md`** — class names, gradle.properties versions
 3. **`minecraft-modding/references/fabric-api.md`** — yarn mappings, Fabric API version
 4. **`minecraft-modding/references/common-patterns.md`** — changed JSON formats
-5. **`minecraft-plugin-dev/SKILL.md`** — `paper-api` version, `api-version` field
+5. **`minecraft-plugin-dev/SKILL.md`** and **`minecraft-plugin-dev/references/runtime-patterns.md`** — `paper-api` version, `api-version` field, runtime API examples
 6. **`minecraft-datapack/SKILL.md`** — pack format number table
 7. **`minecraft-resource-pack/SKILL.md`** — pack format number table
 8. **`minecraft-commands-scripting/SKILL.md`** — any syntax changes
