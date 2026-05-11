@@ -10,6 +10,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Hardened the validator fixture harness so expected-pass fixtures preserve failing child-command statuses instead of reporting green after internal validator failures
 - Made bundled datapack, resource-pack, and worldgen validators tolerate CRLF-affected `jq -r` output on Windows/Git Bash by stripping trailing carriage returns before resolving references
 - Refactored `minecraft-plugin-dev` runtime guidance into a leaner `SKILL.md` plus `references/runtime-patterns.md` for scheduler, Folia, PDC, Adventure, YAML config, Vault, and Paper-specific API examples
+- Rebuilt the README workflow SVG with cleaner margins, accessible metadata, stronger typography, and a more restrained Minecraft-adjacent palette
 
 ## [2.4.2] - 2026-05-04
 

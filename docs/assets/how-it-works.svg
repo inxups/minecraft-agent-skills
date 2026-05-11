@@ -1,103 +1,161 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 392" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 660" role="img" aria-labelledby="title desc">
+  <title id="title">Minecraft Agent Skills workflow</title>
+  <desc id="desc">A Minecraft-themed workflow diagram showing four aligned install and routing steps plus the thirteen skills included in the bundle.</desc>
 
-  <!-- Background -->
-  <rect width="800" height="392" rx="8" fill="#0d1117"/>
+  <defs>
+    <style>
+      .font { font-family: Arial, Helvetica, sans-serif; }
+      .mono { font-family: "Arial", Helvetica, sans-serif; letter-spacing: 0.2px; }
+      .title { fill: #f3f7ed; font-size: 40px; font-weight: 800; }
+      .eyebrow { fill: #95d15c; font-size: 15px; font-weight: 800; letter-spacing: 0; }
+      .body { fill: #b6c2ad; font-size: 16px; font-weight: 400; }
+      .label { fill: #f3f7ed; font-size: 22px; font-weight: 800; }
+      .small { fill: #b6c2ad; font-size: 14px; font-weight: 500; }
+      .tiny { fill: #b8c8b0; font-size: 14px; font-weight: 700; }
+      .code { fill: #d8f6a5; font-size: 14px; font-weight: 700; }
+      .card { fill: #182118; stroke: #40543b; stroke-width: 2; }
+      .card-top { fill: #24341e; }
+      .card-glow { fill: none; stroke: #79b44c; stroke-opacity: 0.28; stroke-width: 2; }
+      .panel { fill: #141d15; stroke: #344531; stroke-width: 2; }
+      .chip { fill: #1f2d1d; stroke: #6d9d4b; stroke-width: 1.4; }
+    </style>
 
-  <!-- Title -->
-  <text x="400" y="36" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif" font-size="17" font-weight="700" fill="#c9d1d9">How It Works</text>
+    <pattern id="stone" width="48" height="48" patternUnits="userSpaceOnUse">
+      <rect width="48" height="48" fill="#101710"/>
+      <path d="M0 16h48M0 32h48M16 0v16M40 16v16M24 32v16" stroke="#1c261c" stroke-width="2"/>
+    </pattern>
 
-  <!-- Step 1 -->
-  <rect x="24" y="60" width="176" height="96" rx="8" fill="#161b22" stroke="#21262d" stroke-width="1"/>
-  <text x="112" y="84" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif" font-size="13" font-weight="700" fill="#58a6ff">01</text>
-  <text x="112" y="100" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif" font-size="13" font-weight="600" fill="#c9d1d9">Choose install mode</text>
-  <text x="112" y="118" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif" font-size="11" font-weight="400" fill="#8b949e">Raw folders or plugin</text>
-  <text x="112" y="132" text-anchor="middle" font-family="'Courier New',monospace" font-size="10" fill="#58a6ff">.agents/skills/</text>
-  <text x="112" y="144" text-anchor="middle" font-family="'Courier New',monospace" font-size="9" fill="#58a6ff">plugins/</text>
-  <text x="112" y="154" text-anchor="middle" font-family="'Courier New',monospace" font-size="9" fill="#58a6ff">minecraft-codex-skills/</text>
+    <filter id="shadow" x="-8%" y="-10%" width="116%" height="125%">
+      <feDropShadow dx="0" dy="9" stdDeviation="10" flood-color="#020402" flood-opacity="0.45"/>
+    </filter>
+  </defs>
 
-  <!-- Arrow 1→2 -->
-  <path d="M200,108 L216,108" stroke="#8b949e" stroke-width="1.5" fill="none"/>
-  <path d="M212,104 L220,108 L212,112" stroke="#8b949e" stroke-width="1.5" fill="none"/>
+  <rect width="1200" height="660" rx="20" fill="#0d140e"/>
+  <rect width="1200" height="660" rx="20" fill="url(#stone)" opacity="0.82"/>
 
-  <!-- Step 2 -->
-  <rect x="220" y="60" width="176" height="96" rx="8" fill="#161b22" stroke="#21262d" stroke-width="1"/>
-  <text x="308" y="84" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif" font-size="13" font-weight="700" fill="#e3b341">02</text>
-  <text x="308" y="100" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif" font-size="13" font-weight="600" fill="#c9d1d9">Load it in your agent</text>
-  <text x="308" y="118" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif" font-size="11" font-weight="400" fill="#8b949e">Copy folders, install in</text>
-  <text x="308" y="132" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif" font-size="11" font-weight="400" fill="#8b949e">Codex, or run Claude with</text>
-  <text x="308" y="146" text-anchor="middle" font-family="'Courier New',monospace" font-size="10" fill="#e3b341">--plugin-dir</text>
+  <!-- Pixel terrain accent -->
+  <g opacity="0.95">
+    <rect x="0" y="0" width="1200" height="18" fill="#263a20"/>
+    <rect x="0" y="18" width="1200" height="10" fill="#5e8f3d"/>
+    <rect x="32" y="28" width="34" height="12" fill="#3f642f"/>
+    <rect x="176" y="28" width="48" height="12" fill="#3f642f"/>
+    <rect x="388" y="28" width="40" height="12" fill="#3f642f"/>
+    <rect x="782" y="28" width="56" height="12" fill="#3f642f"/>
+    <rect x="1052" y="28" width="42" height="12" fill="#3f642f"/>
+  </g>
 
-  <!-- Arrow 2→3 -->
-  <path d="M396,108 L412,108" stroke="#8b949e" stroke-width="1.5" fill="none"/>
-  <path d="M408,104 L416,108 L408,112" stroke="#8b949e" stroke-width="1.5" fill="none"/>
+  <g class="font" transform="translate(56 68)">
+    <text class="eyebrow" x="0" y="0">Minecraft Agent Skills</text>
+    <text class="title" x="0" y="46">Install once. Let the right skill take over.</text>
+    <text class="body" x="0" y="78">A synced 13-skill library for Minecraft modding, plugins, datapacks, packs, testing, release, and server operations.</text>
+  </g>
 
-  <!-- Step 3 -->
-  <rect x="416" y="60" width="176" height="96" rx="8" fill="#161b22" stroke="#21262d" stroke-width="1"/>
-  <text x="504" y="84" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif" font-size="13" font-weight="700" fill="#7ee787">03</text>
-  <text x="504" y="100" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif" font-size="13" font-weight="600" fill="#c9d1d9">Assign a task</text>
-  <text x="504" y="118" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif" font-size="11" font-weight="400" fill="#8b949e">"Add a custom ore block</text>
-  <text x="504" y="132" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif" font-size="11" font-weight="400" fill="#8b949e">with world generation"</text>
+  <!-- Four aligned workflow cards -->
+  <g class="font" filter="url(#shadow)">
+    <g transform="translate(56 168)">
+      <rect class="card" width="254" height="204" rx="12"/>
+      <rect class="card-top" width="254" height="12" rx="12"/>
+      <rect class="card-glow" x="1" y="1" width="252" height="202" rx="11"/>
+      <rect x="24" y="32" width="48" height="38" rx="6" fill="#20391a" stroke="#75b84a" stroke-width="2"/>
+      <text x="48" y="57" text-anchor="middle" fill="#d8f6a5" font-size="18" font-weight="900">01</text>
+      <text class="label" x="24" y="108">Choose install</text>
+      <text class="label" x="24" y="135">mode</text>
+      <text class="small" x="24" y="164">Raw folders, submodule,</text>
+      <text class="small" x="24" y="185">release zip, or plugin.</text>
+    </g>
 
-  <!-- Arrow 3→4 -->
-  <path d="M592,108 L608,108" stroke="#8b949e" stroke-width="1.5" fill="none"/>
-  <path d="M604,104 L612,108 L604,112" stroke="#8b949e" stroke-width="1.5" fill="none"/>
+    <g transform="translate(334 168)">
+      <rect class="card" width="254" height="204" rx="12"/>
+      <rect class="card-top" width="254" height="12" rx="12"/>
+      <rect class="card-glow" x="1" y="1" width="252" height="202" rx="11"/>
+      <rect x="24" y="32" width="48" height="38" rx="6" fill="#3b3218" stroke="#d0a64f" stroke-width="2"/>
+      <text x="48" y="57" text-anchor="middle" fill="#ffe39a" font-size="18" font-weight="900">02</text>
+      <text class="label" x="24" y="108">Load the bundle</text>
+      <text class="small" x="24" y="144">Codex, Claude Code,</text>
+      <text class="small" x="24" y="165">or local plugin install.</text>
+    </g>
 
-  <!-- Step 4 -->
-  <rect x="612" y="60" width="164" height="96" rx="8" fill="#161b22" stroke="#21262d" stroke-width="1"/>
-  <text x="694" y="84" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif" font-size="13" font-weight="700" fill="#3fb950">04</text>
-  <text x="694" y="100" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif" font-size="13" font-weight="600" fill="#c9d1d9">Skill activates</text>
-  <text x="694" y="118" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif" font-size="11" font-weight="400" fill="#8b949e">Agent auto-selects:</text>
-  <text x="694" y="132" text-anchor="middle" font-family="'Courier New',monospace" font-size="10" fill="#3fb950">minecraft-modding</text>
-  <text x="694" y="146" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif" font-size="10" font-weight="400" fill="#8b949e">from the synced bundle</text>
+    <g transform="translate(612 168)">
+      <rect class="card" width="254" height="204" rx="12"/>
+      <rect class="card-top" width="254" height="12" rx="12"/>
+      <rect class="card-glow" x="1" y="1" width="252" height="202" rx="11"/>
+      <rect x="24" y="32" width="48" height="38" rx="6" fill="#1d3140" stroke="#7eb8ff" stroke-width="2"/>
+      <text x="48" y="57" text-anchor="middle" fill="#cce4ff" font-size="18" font-weight="900">03</text>
+      <text class="label" x="24" y="108">Describe the task</text>
+      <text class="small" x="24" y="144">“Add a custom ore block</text>
+      <text class="small" x="24" y="165">with generation and tests.”</text>
+    </g>
 
-  <!-- Divider label -->
-  <text x="400" y="196" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif" font-size="11" font-weight="600" fill="#6e7681" letter-spacing="1.5">13 SKILLS INCLUDED</text>
+    <g transform="translate(890 168)">
+      <rect class="card" width="254" height="204" rx="12"/>
+      <rect class="card-top" width="254" height="12" rx="12"/>
+      <rect class="card-glow" x="1" y="1" width="252" height="202" rx="11"/>
+      <rect x="24" y="32" width="48" height="38" rx="6" fill="#20391a" stroke="#75b84a" stroke-width="2"/>
+      <text x="48" y="57" text-anchor="middle" fill="#d8f6a5" font-size="18" font-weight="900">04</text>
+      <text class="label" x="24" y="108">Skill activates</text>
+      <text class="small" x="24" y="144">The agent routes to the</text>
+      <text class="small" x="24" y="165">matching workflow files.</text>
+    </g>
+  </g>
 
-  <!-- Skills grid — Row 1 -->
-  <rect x="32"  y="212" width="142" height="32" rx="6" fill="none" stroke="#21262d" stroke-width="1"/>
-  <text x="103" y="233" text-anchor="middle" font-family="'Courier New',monospace" font-size="11" fill="#58a6ff">modding</text>
+  <!-- Aligned arrows -->
+  <g stroke="#6f806a" stroke-width="3" stroke-linecap="square" fill="none">
+    <path d="M310 270h24"/>
+    <path d="M326 262l8 8-8 8"/>
+    <path d="M588 270h24"/>
+    <path d="M604 262l8 8-8 8"/>
+    <path d="M866 270h24"/>
+    <path d="M882 262l8 8-8 8"/>
+  </g>
 
-  <rect x="186" y="212" width="142" height="32" rx="6" fill="none" stroke="#21262d" stroke-width="1"/>
-  <text x="257" y="233" text-anchor="middle" font-family="'Courier New',monospace" font-size="11" fill="#58a6ff">plugin-dev</text>
+  <!-- Skill groups -->
+  <g class="font" transform="translate(56 414)">
+    <text class="eyebrow" x="0" y="0">13 skills included</text>
 
-  <rect x="340" y="212" width="142" height="32" rx="6" fill="none" stroke="#21262d" stroke-width="1"/>
-  <text x="411" y="233" text-anchor="middle" font-family="'Courier New',monospace" font-size="11" fill="#58a6ff">datapack</text>
+    <g transform="translate(0 28)">
+      <rect class="panel" width="348" height="166" rx="12"/>
+      <text class="tiny" x="24" y="34">Development</text>
+      <rect class="chip" x="24" y="54" width="142" height="34" rx="7"/>
+      <text class="code" x="95" y="76" text-anchor="middle">modding</text>
+      <rect class="chip" x="182" y="54" width="142" height="34" rx="7"/>
+      <text class="code" x="253" y="76" text-anchor="middle">plugin-dev</text>
+      <rect class="chip" x="24" y="98" width="142" height="34" rx="7"/>
+      <text class="code" x="95" y="120" text-anchor="middle">multiloader</text>
+      <rect class="chip" x="182" y="98" width="142" height="34" rx="7"/>
+      <text class="code" x="253" y="120" text-anchor="middle">testing</text>
+    </g>
 
-  <rect x="494" y="212" width="142" height="32" rx="6" fill="none" stroke="#21262d" stroke-width="1"/>
-  <text x="565" y="233" text-anchor="middle" font-family="'Courier New',monospace" font-size="11" fill="#58a6ff">commands</text>
+    <g transform="translate(370 28)">
+      <rect class="panel" width="348" height="166" rx="12"/>
+      <text class="tiny" x="24" y="34">Content and assets</text>
+      <rect class="chip" x="24" y="54" width="142" height="34" rx="7"/>
+      <text class="code" x="95" y="76" text-anchor="middle">datapack</text>
+      <rect class="chip" x="182" y="54" width="142" height="34" rx="7"/>
+      <text class="code" x="253" y="76" text-anchor="middle">commands</text>
+      <rect class="chip" x="24" y="98" width="142" height="34" rx="7"/>
+      <text class="code" x="95" y="120" text-anchor="middle">resource-pack</text>
+      <rect class="chip" x="182" y="98" width="142" height="34" rx="7"/>
+      <text class="code" x="253" y="120" text-anchor="middle">imagegen</text>
+    </g>
 
-  <rect x="648" y="212" width="120" height="32" rx="6" fill="none" stroke="#21262d" stroke-width="1"/>
-  <text x="708" y="233" text-anchor="middle" font-family="'Courier New',monospace" font-size="11" fill="#58a6ff">ci-release</text>
+    <g transform="translate(740 28)">
+      <rect class="panel" width="348" height="166" rx="12"/>
+      <text class="tiny" x="24" y="34">World, release, ops</text>
+      <rect class="chip" x="24" y="52" width="142" height="32" rx="7"/>
+      <text class="code" x="95" y="73" text-anchor="middle" font-size="13">world-generation</text>
+      <rect class="chip" x="182" y="52" width="142" height="32" rx="7"/>
+      <text class="code" x="253" y="73" text-anchor="middle">ci-release</text>
+      <rect class="chip" x="24" y="91" width="142" height="32" rx="7"/>
+      <text class="code" x="95" y="112" text-anchor="middle">server-admin</text>
+      <rect class="chip" x="182" y="91" width="142" height="32" rx="7"/>
+      <text class="code" x="253" y="112" text-anchor="middle">worldedit</text>
+      <rect class="chip" x="24" y="130" width="300" height="32" rx="7"/>
+      <text class="code" x="174" y="151" text-anchor="middle">essentials-ops</text>
+    </g>
+  </g>
 
-  <!-- Skills grid — Row 2 -->
-  <rect x="32"  y="256" width="142" height="32" rx="6" fill="none" stroke="#21262d" stroke-width="1"/>
-  <text x="103" y="277" text-anchor="middle" font-family="'Courier New',monospace" font-size="11" fill="#58a6ff">testing</text>
-
-  <rect x="186" y="256" width="142" height="32" rx="6" fill="none" stroke="#21262d" stroke-width="1"/>
-  <text x="257" y="277" text-anchor="middle" font-family="'Courier New',monospace" font-size="11" fill="#58a6ff">world-generation</text>
-
-  <rect x="340" y="256" width="142" height="32" rx="6" fill="none" stroke="#21262d" stroke-width="1"/>
-  <text x="411" y="277" text-anchor="middle" font-family="'Courier New',monospace" font-size="11" fill="#58a6ff">resource-pack</text>
-
-  <rect x="494" y="256" width="142" height="32" rx="6" fill="none" stroke="#21262d" stroke-width="1"/>
-  <text x="565" y="277" text-anchor="middle" font-family="'Courier New',monospace" font-size="11" fill="#58a6ff">server-admin</text>
-
-  <rect x="648" y="256" width="120" height="32" rx="6" fill="none" stroke="#21262d" stroke-width="1"/>
-  <text x="708" y="277" text-anchor="middle" font-family="'Courier New',monospace" font-size="11" fill="#58a6ff">multiloader</text>
-
-  <!-- Skills grid — Row 3 -->
-  <rect x="40" y="300" width="220" height="32" rx="6" fill="none" stroke="#21262d" stroke-width="1"/>
-  <text x="150" y="321" text-anchor="middle" font-family="'Courier New',monospace" font-size="11" fill="#58a6ff">worldedit-ops</text>
-
-  <rect x="290" y="300" width="220" height="32" rx="6" fill="none" stroke="#21262d" stroke-width="1"/>
-  <text x="400" y="321" text-anchor="middle" font-family="'Courier New',monospace" font-size="11" fill="#58a6ff">essentials-ops</text>
-
-  <rect x="540" y="300" width="220" height="32" rx="6" fill="none" stroke="#21262d" stroke-width="1"/>
-  <text x="650" y="321" text-anchor="middle" font-family="'Courier New',monospace" font-size="11" fill="#e3b341">imagegen</text>
-
-  <!-- Sync note -->
-  <text x="400" y="356" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif" font-size="11" fill="#8b949e">Raw folders, Codex installs, and Claude plugin runs all ship the same synced skill tree.</text>
-
-  <!-- Footer -->
-  <text x="400" y="376" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif" font-size="10.5" fill="#8b949e">Built-in image generation is Codex-first; the rest of the bundle stays host-agnostic.</text>
+  <g class="font" transform="translate(56 634)">
+    <rect class="panel" x="0" y="-18" width="1088" height="42" rx="10"/>
+    <text class="body" x="24" y="8">Canonical tree: <tspan class="mono" fill="#d8f6a5">.agents/skills</tspan> · mirrored to <tspan class="mono" fill="#d8f6a5">.codex</tspan>, <tspan class="mono" fill="#d8f6a5">.claude</tspan>, and the plugin bundle.</text>
+  </g>
 </svg>
