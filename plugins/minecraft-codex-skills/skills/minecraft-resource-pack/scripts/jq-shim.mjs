@@ -72,6 +72,17 @@ function collectSounds(input) {
   return results;
 }
 
+function collectItemDefinitionModels(input) {
+  const results = [];
+  walk(input, (entry) => {
+    if (!isObject(entry)) return;
+    if (entry.type === "minecraft:model" && typeof entry.model === "string") {
+      results.push(entry.model);
+    }
+  });
+  return results;
+}
+
 function flattenOptionalField(input, field) {
   const results = [];
   const value = input?.[field];
@@ -100,16 +111,31 @@ function normalizeFilter(filter) {
   return filter.replace(/\s+/g, "");
 }
 
+function isInteger(value) {
+  return typeof value === "number" && Number.isInteger(value);
+}
+
+function isPackVersion(value) {
+  return isInteger(value)
+    || (Array.isArray(value) && value.length === 2 && value.every(isInteger));
+}
+
 function evaluateFilter(input, filter) {
   switch (normalizeFilter(filter)) {
     case "empty":
       return [];
     case ".pack.pack_format|numbers":
       return typeof input?.pack?.pack_format === "number" ? [input.pack.pack_format] : [];
+    case ".pack.pack_format|type==\"number\"and.==floor":
+      return isInteger(input?.pack?.pack_format) ? [true] : [false];
     case ".pack.min_format|numbers":
       return typeof input?.pack?.min_format === "number" ? [input.pack.min_format] : [];
+    case ".pack.min_format|((type==\"number\"and.==floor)or(type==\"array\"andlength==2andall(.[];type==\"number\"and.==floor)))":
+      return [isPackVersion(input?.pack?.min_format)];
     case ".pack.max_format|numbers":
       return typeof input?.pack?.max_format === "number" ? [input.pack.max_format] : [];
+    case ".pack.max_format|((type==\"number\"and.==floor)or(type==\"array\"andlength==2andall(.[];type==\"number\"and.==floor)))":
+      return [isPackVersion(input?.pack?.max_format)];
     case ".values|type==\"array\"":
       return [Array.isArray(input?.values)];
     case ".values[]?|strings":
@@ -122,6 +148,8 @@ function evaluateFilter(input, filter) {
       return Array.isArray(input?.overrides) ? input.overrides.map((entry) => entry?.model).filter(present) : [];
     case "(.variants?//{}|..|objects|.model?//empty),(.multipart[]?.apply?|iftype==\"array\"then.[]?.model?//emptyelse.model?//emptyend)":
       return collectBlockstateModels(input);
+    case "..|objects|select(.type?==\"minecraft:model\"and(.model?|type)==\"string\")|.model":
+      return collectItemDefinitionModels(input);
     case "..|objects|select(has(\"sounds\"))|.sounds[]?|iftype==\"string\"then.else.name?//emptyend":
       return collectSounds(input);
     case ".providers[]?|.file?//empty":

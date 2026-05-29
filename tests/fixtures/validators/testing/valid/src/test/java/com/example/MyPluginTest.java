@@ -1,6 +1,6 @@
 package com.example;
 
-import be.seeseemelk.mockbukkit.MockBukkit;
+import org.mockbukkit.mockbukkit.MockBukkit;
 
 class MyPluginTest {
     void boot() {

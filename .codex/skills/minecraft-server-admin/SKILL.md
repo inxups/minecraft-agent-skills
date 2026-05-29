@@ -195,7 +195,6 @@ forwarding-secret-file = "forwarding.secret"
 
 ```properties
 online-mode=false
-enforce-secure-profile=false
 ```
 
 Paper backend forwarding support (`config/paper-global.yml`):
@@ -210,6 +209,11 @@ proxies:
 
 Use the same secret value stored in Velocity's `forwarding.secret` file; the backend
 config takes the secret string itself, not a file path.
+
+Keep `enforce-secure-profile` at the server default unless you are handling a
+specific legacy-client or incident workaround. It is not part of the baseline
+Velocity setup. Also confirm `settings.bungeecord: false` in `spigot.yml`; do
+not enable BungeeCord forwarding and Velocity modern forwarding at the same time.
 
 ### Validation runbook
 
@@ -242,6 +246,12 @@ config takes the secret string itself, not a file path.
 
 ### Example backup script
 
+For a production server, quiesce world writes before copying live world folders.
+The example below assumes a maintenance window and a cleanly stopped server. If
+you use RCON-based live backups instead, choose a client/secret mechanism that
+does not expose the password in command arguments, flush chunks first, and test
+the restore path before trusting the backup.
+
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
@@ -252,6 +262,12 @@ SERVER_ROOT="/srv/minecraft"
 DEST="${BACKUP_ROOT}/${DATE}"
 
 mkdir -p "$DEST"
+
+if pgrep -f "server.jar" >/dev/null; then
+  echo "Refusing to archive a live server. Stop it cleanly or use a tested snapshot workflow." >&2
+  exit 1
+fi
+
 tar -czf "${DEST}/worlds.tar.gz" -C "$SERVER_ROOT" world world_nether world_the_end
 tar -czf "${DEST}/plugins-config.tar.gz" -C "$SERVER_ROOT" plugins config
 cp "$SERVER_ROOT/server.properties" "$DEST/server.properties"
@@ -366,6 +382,10 @@ services:
       - ./data:/data
     restart: unless-stopped
 ```
+
+This Docker example targets the repository's 1.21.x guidance and Java 21.
+Minecraft 26.1.x/Paper 26.x requires Java 25 and Paper's 26.x version line; use
+a Java 25 image and re-check plugin compatibility before changing `VERSION`.
 
 ### Pterodactyl/Wings notes
 

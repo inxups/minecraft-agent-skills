@@ -91,7 +91,11 @@ if [[ -n "$TEST_ROOT" ]] && grep -R -E -q 'MockBukkit|ServerMock|PlayerMock' "$T
 fi
 
 if [[ "$HAS_MOCKBUKKIT_TESTS" -eq 1 && -n "$BUILD_FILE" ]]; then
-  if grep -Eq 'MockBukkit' "$BUILD_FILE"; then
+  if grep -R -E -q 'be\.seeseemelk|com\.github\.seeseemelk' "$BUILD_FILE" "$TEST_ROOT"; then
+    warn "legacy MockBukkit 3.x coordinate or package detected; prefer org.mockbukkit.mockbukkit 4.x"
+  fi
+
+  if grep -Eiq 'MockBukkit|mockbukkit' "$BUILD_FILE"; then
     pass "build file declares MockBukkit dependency"
   else
     fail "MockBukkit tests detected but build file is missing MockBukkit dependency"

@@ -29,10 +29,12 @@ official Minecraft project.
 </p>
 <!-- markdownlint-enable MD033 -->
 
-Use the raw-skill path if you want to copy `.agents/`, `.codex/`, or `.claude/`
-directly into a project. Use the plugin path if you want to keep the repository
-layout intact and load `plugins/minecraft-codex-skills/` through Codex's local
-marketplace flow or Claude Code's `--plugin-dir` support.
+Use the raw-skill path if you want to copy `.agents/` for Codex or `.claude/`
+for Claude Code directly into a project. The `.codex/skills/` tree is kept as a
+compatibility mirror, not the recommended authoring or raw-install path. Use the
+plugin path if you want to keep the repository layout intact and load
+`plugins/minecraft-codex-skills/` through Codex's local marketplace flow or
+Claude Code's `--plugin-dir` support.
 
 ---
 
@@ -99,7 +101,8 @@ cp -r /tmp/mc-skills/.agents .
 ```
 
 Codex can read the canonical `.agents/skills/` tree directly. The `.codex/skills/`
-mirror is kept byte-for-byte identical if you prefer that layout.
+mirror is kept byte-for-byte identical for hosts or older setups that still
+expect that layout.
 
 ### Option B — Raw skills for Claude Code
 
@@ -149,7 +152,8 @@ cp -r .skills-src/.agents .
 Download the latest release from
 `https://github.com/Jahrome907/minecraft-agent-skills/releases/latest`.
 
-- Use `.agents/` or `.codex/` for Codex raw-skill installs.
+- Use `.agents/` for Codex raw-skill installs.
+- Use `.codex/skills/` only when your host explicitly expects the compatibility mirror.
 - Use `.claude/` for Claude Code raw-skill installs.
 - Use `plugins/minecraft-codex-skills/` for Claude Code plugin installs.
 - For Codex plugin installs, keep the full release layout intact so `.agents/plugins/marketplace.json` and `plugins/minecraft-codex-skills/` remain together under the same repo root.
@@ -250,8 +254,10 @@ your-project/
 Repo development tooling requires **Node 20+**. The copied skill directories do not
 need the repo-root Node install.
 
-The shell-based fixture scripts require **bash**, **jq**, and **rsync**. On Windows,
-run those repo checks from WSL or Git Bash with those tools available on `PATH`.
+The shell-based fixture scripts require **bash** and **jq**. `rsync` is used when
+available for mirror sync, with a Node fallback for Windows/Git Bash environments.
+On Windows, run repo checks from WSL or Git Bash with those tools available on
+`PATH`.
 
 ```bash
 # One-time: install/check local dev tools
@@ -264,7 +270,10 @@ npm ci
 $EDITOR .agents/skills/<skill>/SKILL.md
 
 # Sync compatibility mirrors and plugin bundle
-bash ./scripts/sync-skills-layout.sh sync
+npm run sync:skills
+
+# Check mirror sync from the same npm path used by CI
+npm run check:sync
 
 # Validate plugin manifests and marketplace metadata
 node ./scripts/validate-plugin-bundle.mjs
@@ -317,7 +326,9 @@ The official Codex CLI docs still use npm for install and upgrade. Current Windo
 support is experimental, so use a WSL2 workspace for the best Windows experience.
 
 Codex reads the appropriate `SKILL.md` and picks up platform patterns, correct
-API versions, JSON schemas, and build commands automatically.
+API-version guidance, JSON patterns, validators, and build-command examples from
+the skill bundle. Still verify against the target project's exact Minecraft,
+loader, and server runtime before release.
 
 If you prefer plugin installs in Codex, start Codex from the repository root,
 open `/plugins`, and install `minecraft-codex-skills` from the repo marketplace
@@ -351,13 +362,18 @@ support.
 
 ## Supported Versions
 
+This release is intentionally centered on the Minecraft 1.21.x line. Minecraft
+26.1.x is now a separate porting surface: Java 25, Paper 26.x API coordinates,
+and newer Fabric/vanilla data changes should be verified against upstream docs
+before applying 1.21.x snippets unchanged.
+
 |Platform|Version|Java|
 |---|---|---|
 |NeoForge|1.21.x examples centered on 21.11.x|21|
-|Fabric|1.21.11 line (`fabric-api:0.116.10+1.21.1`)|21|
+|Fabric|1.21.11 line (`fabric-api:0.141.4+1.21.11`, Loom 1.14)|21|
 |Paper/Bukkit|1.21.x (`paper-api:1.21.11-R0.1-SNAPSHOT`)|21|
-|Vanilla datapack|1.21–1.21.11 (formats 48–94.1; `min_format` / `max_format` from 1.21.9+)|—|
-|Resource pack|1.21–1.21.11 (formats 34–75.0; `min_format` / `max_format` from 1.21.9+)|—|
+|Vanilla datapack|1.21-1.21.11 (formats 48-94.1; 1.21.11 exact metadata uses `[94, 1]` full-version arrays)|-|
+|Resource pack|1.21-1.21.11 (formats 34-75.0; 1.21.11 exact metadata uses `[75, 0]` full-version arrays)|-|
 
 ---
 

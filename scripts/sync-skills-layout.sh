@@ -18,6 +18,15 @@ fi
 
 FAILED=0
 
+if ! command -v rsync >/dev/null 2>&1; then
+  if command -v node >/dev/null 2>&1 && [[ -f "scripts/sync-skills-layout.mjs" ]]; then
+    node scripts/sync-skills-layout.mjs "$MODE"
+    exit $?
+  fi
+  echo "[FAIL] rsync is required when Node fallback is unavailable" >&2
+  exit 1
+fi
+
 case "$MODE" in
   sync)
     for MIRROR_DIR in "${MIRROR_DIRS[@]}"; do

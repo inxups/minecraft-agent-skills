@@ -16,15 +16,15 @@ need_cmd() {
 
 install_with_apt() {
   sudo apt-get update
-  sudo apt-get install -y jq rsync nodejs npm
+  sudo apt-get install -y jq rsync
 }
 
 install_with_brew() {
   brew install jq rsync node
 }
 
-if need_cmd jq && need_cmd rsync && need_cmd node && need_cmd npm; then
-  echo "$PASS Required tools already installed: jq, rsync, node, npm"
+if need_cmd jq && need_cmd node && need_cmd npm; then
+  echo "$PASS Required tools already installed: jq, node, npm"
 else
   echo "[INFO] Installing missing tools..."
   case "$OS" in
@@ -52,7 +52,13 @@ else
   esac
 fi
 
-for cmd in jq rsync node npm; do
+if ! need_cmd node || ! need_cmd npm; then
+  echo "$FAIL Node 20+ and npm are required but were not found on PATH."
+  echo "$WARN Install Node 20+ with nvm, fnm, Volta, Homebrew, or NodeSource, then rerun."
+  exit 1
+fi
+
+for cmd in jq node npm; do
   if need_cmd "$cmd"; then
     ver="$($cmd --version 2>/dev/null | head -n 1 || true)"
     echo "$PASS $cmd ${ver}"
@@ -61,6 +67,20 @@ for cmd in jq rsync node npm; do
     exit 1
   fi
 done
+
+if need_cmd rsync; then
+  ver="$(rsync --version 2>/dev/null | head -n 1 || true)"
+  echo "$PASS rsync ${ver}"
+else
+  echo "$WARN rsync not found; mirror sync will use the Node fallback"
+fi
+
+node_major="$(node --version | sed -E 's/^v([0-9]+).*/\1/')"
+if [[ -z "$node_major" || "$node_major" -lt 20 ]]; then
+  echo "$FAIL Node 20+ is required, but found $(node --version 2>/dev/null || echo missing)"
+  echo "$WARN Install Node 20+ with nvm, fnm, Volta, Homebrew, or NodeSource, then rerun."
+  exit 1
+fi
 
 echo ""
 echo "$PASS Dev tools are ready"

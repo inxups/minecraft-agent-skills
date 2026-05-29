@@ -77,18 +77,18 @@ check_pack_metadata() {
   local has_min_format=0
   local has_max_format=0
 
-  if jq -e '.pack.pack_format | numbers' "$file" >/dev/null 2>&1; then
-    pass "pack.mcmeta uses numeric pack.pack_format"
+  if jq -e '.pack.pack_format | type == "number" and . == floor' "$file" >/dev/null 2>&1; then
+    pass "pack.mcmeta uses integer pack.pack_format"
     has_pack_format=1
   fi
 
-  if jq -e '.pack.min_format | numbers' "$file" >/dev/null 2>&1; then
-    pass "pack.mcmeta uses numeric pack.min_format"
+  if jq -e '.pack.min_format | ((type == "number" and . == floor) or (type == "array" and length == 2 and all(.[]; type == "number" and . == floor)))' "$file" >/dev/null 2>&1; then
+    pass "pack.mcmeta uses valid pack.min_format"
     has_min_format=1
   fi
 
-  if jq -e '.pack.max_format | numbers' "$file" >/dev/null 2>&1; then
-    pass "pack.mcmeta uses numeric pack.max_format"
+  if jq -e '.pack.max_format | ((type == "number" and . == floor) or (type == "array" and length == 2 and all(.[]; type == "number" and . == floor)))' "$file" >/dev/null 2>&1; then
+    pass "pack.mcmeta uses valid pack.max_format"
     has_max_format=1
   fi
 
@@ -100,7 +100,7 @@ check_pack_metadata() {
     return
   fi
 
-  fail "pack.mcmeta must define either numeric .pack.pack_format or both numeric .pack.min_format and .pack.max_format"
+  fail "pack.mcmeta must define either integer .pack.pack_format or both .pack.min_format and .pack.max_format as integers or [major, minor] integer arrays"
 }
 
 echo "=== Datapack Validator ==="

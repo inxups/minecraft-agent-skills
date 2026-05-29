@@ -35,12 +35,12 @@ platform-specific behavior behind the `@ExpectPlatform` abstraction.
 minecraft_version=1.21.11
 enabled_platforms=fabric,neoforge
 
-architectury_version=13.0.8
-fabric_loader_version=0.17.3
-fabric_api_version=0.116.10+1.21.1
+architectury_version=19.0.1
+fabric_loader_version=0.18.4
+fabric_api_version=0.141.4+1.21.11
 neoforge_version=21.11.42
 
-loom_version=1.7
+loom_version=1.14
 ```
 
 Pin `architectury_version`, the Architectury plugin version, and `loom_version`
@@ -171,7 +171,7 @@ dependencies {
     minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
     mappings loom.officialMojangMappings()
 
-    modImplementation "dev.architectury:architectury-api:${rootProject.architectury_version}"
+    modImplementation "dev.architectury:architectury:${rootProject.architectury_version}"
 }
 ```
 
@@ -208,7 +208,7 @@ dependencies {
 
     modImplementation "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
     modApi "net.fabricmc.fabric-api:fabric-api:${rootProject.fabric_api_version}"
-    modApi "dev.architectury:architectury-api:${rootProject.architectury_version}:fabric"
+    modApi "dev.architectury:architectury-fabric:${rootProject.architectury_version}"
 
     common(project(path: ":common", configuration: "namedElements")) { transitive false }
     shadowCommon(project(path: ":common", configuration: "transformProductionFabric")) { transitive false }
@@ -264,7 +264,7 @@ dependencies {
     mappings loom.officialMojangMappings()
 
     neoForge "net.neoforged:neoforge:${rootProject.neoforge_version}"
-    modApi "dev.architectury:architectury-api:${rootProject.architectury_version}:neoforge"
+    modApi "dev.architectury:architectury-neoforge:${rootProject.architectury_version}"
 
     common(project(path: ":common", configuration: "namedElements")) { transitive false }
     shadowCommon(project(path: ":common", configuration: "transformProductionNeoForge")) { transitive false }
@@ -411,10 +411,10 @@ public class MyModFabric implements ModInitializer {
     "main": ["com.example.mymod.fabric.MyModFabric"]
   },
   "depends": {
-    "fabricloader": ">=0.16.0",
+    "fabricloader": ">=0.18.4",
     "fabric-api": "*",
-    "architectury": ">=13.0.0",
-    "minecraft": "~1.21"
+    "architectury": ">=19.0.0",
+    "minecraft": "1.21.11"
   }
 }
 ```
@@ -442,7 +442,7 @@ public class MyModNeoForge {
 ### `neoforge/.../resources/META-INF/neoforge.mods.toml`
 ```toml
 modLoader = "javafml"
-loaderVersion = "[4,)"
+loaderVersion = "[1,)"
 license = "MIT"
 
 [[mods]]

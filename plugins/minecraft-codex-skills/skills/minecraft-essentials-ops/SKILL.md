@@ -73,8 +73,19 @@ If using EssentialsX signs and economy interactions:
    - starter-tier prices
    - anti-inflation sinks
    - admin-only item exceptions
-2. Restrict sign creation permissions to trusted groups.
-3. Validate buy/sell math after config changes.
+2. Enable only the sign types you intend to support in `config.yml`:
+   ```yaml
+   enabledSigns:
+     - buy
+     - sell
+   ```
+3. Restrict creation permissions to trusted groups:
+   - `essentials.signs.create.buy`
+   - `essentials.signs.create.sell`
+4. Grant use permissions only to groups that should transact:
+   - `essentials.signs.use.buy`
+   - `essentials.signs.use.sell`
+5. Validate buy/sell math with a non-op player account after config changes.
 
 ### Sign shop formats
 
@@ -154,6 +165,10 @@ Common commands:
 Control limits through permissions and Essentials config values.
 
 ### Nicknames and spawn management
+
+`/setspawn` and `/spawn` require the `EssentialsXSpawn` module. Confirm the jar is
+installed, the startup log has no module-load errors, and player groups have
+`essentials.spawn` before treating a spawn command failure as a location issue.
 
 ```mcfunction
 /nick BuilderOne

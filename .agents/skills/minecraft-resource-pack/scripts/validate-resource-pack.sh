@@ -24,7 +24,7 @@ Usage: validate-resource-pack.sh [--root <path>] [--strict]
 
 Checks resource pack integrity:
 - JSON validity for assets/** and pack.mcmeta
-- model/blockstate/font/sounds references point to existing files
+- model/blockstate/item-definition/font/sounds references point to existing files
 - every .png.mcmeta has a matching .png
 USAGE
       exit 0
@@ -77,18 +77,18 @@ check_pack_metadata() {
   local has_min_format=0
   local has_max_format=0
 
-  if jq -e '.pack.pack_format | numbers' "$file" >/dev/null 2>&1; then
-    pass "pack.mcmeta uses numeric pack.pack_format"
+  if jq -e '.pack.pack_format | type == "number" and . == floor' "$file" >/dev/null 2>&1; then
+    pass "pack.mcmeta uses integer pack.pack_format"
     has_pack_format=1
   fi
 
-  if jq -e '.pack.min_format | numbers' "$file" >/dev/null 2>&1; then
-    pass "pack.mcmeta uses numeric pack.min_format"
+  if jq -e '.pack.min_format | ((type == "number" and . == floor) or (type == "array" and length == 2 and all(.[]; type == "number" and . == floor)))' "$file" >/dev/null 2>&1; then
+    pass "pack.mcmeta uses valid pack.min_format"
     has_min_format=1
   fi
 
-  if jq -e '.pack.max_format | numbers' "$file" >/dev/null 2>&1; then
-    pass "pack.mcmeta uses numeric pack.max_format"
+  if jq -e '.pack.max_format | ((type == "number" and . == floor) or (type == "array" and length == 2 and all(.[]; type == "number" and . == floor)))' "$file" >/dev/null 2>&1; then
+    pass "pack.mcmeta uses valid pack.max_format"
     has_max_format=1
   fi
 
@@ -100,7 +100,7 @@ check_pack_metadata() {
     return
   fi
 
-  fail "pack.mcmeta must define either numeric .pack.pack_format or both numeric .pack.min_format and .pack.max_format"
+  fail "pack.mcmeta must define either integer .pack.pack_format or both .pack.min_format and .pack.max_format as integers or [major, minor] integer arrays"
 }
 
 resolve_texture() {
@@ -211,6 +211,16 @@ while IFS= read -r -d '' model_file; do
     resolve_model "$ns" "$over_model"
   done < <(jq -r '.overrides[]?.model? // empty' "$model_file")
 done < <(find "$ROOT/assets" -type f -path '*/models/*.json' -print0 2>/dev/null)
+
+echo "Checking item definition model references..."
+while IFS= read -r -d '' item_file; do
+  rel="${item_file#"$ROOT/assets/"}"
+  ns="${rel%%/*}"
+  while IFS= read -r model_ref; do
+    model_ref="$(strip_cr "$model_ref")"
+    resolve_model "$ns" "$model_ref"
+  done < <(jq -r '.. | objects | select(.type? == "minecraft:model" and (.model? | type) == "string") | .model' "$item_file")
+done < <(find "$ROOT/assets" -type f -path '*/items/*.json' -print0 2>/dev/null)
 
 while IFS= read -r -d '' blockstate_file; do
   rel="${blockstate_file#"$ROOT/assets/"}"

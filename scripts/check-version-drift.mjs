@@ -9,23 +9,32 @@ const checks = [
     file: "README.md",
     required: [
       /Paper 1\.21\.11 server/,
-      /Vanilla datapack\|1\.21–1\.21\.11 \(formats 48–94\.1; `min_format` \/ `max_format` from 1\.21\.9\+\)\|—/,
-      /Resource pack\|1\.21–1\.21\.11 \(formats 34–75\.0; `min_format` \/ `max_format` from 1\.21\.9\+\)\|—/
+      /Fabric\|1\.21\.11 line \(`fabric-api:0\.141\.4\+1\.21\.11`, Loom 1\.14\)\|21/,
+      /Vanilla datapack\|1\.21-1\.21\.11 \(formats 48-94\.1; 1\.21\.11 exact metadata uses `\[94, 1\]` full-version arrays\)\|-/,
+      /Resource pack\|1\.21-1\.21\.11 \(formats 34-75\.0; 1\.21\.11 exact metadata uses `\[75, 0\]` full-version arrays\)\|-/
     ]
   },
   {
     file: ".agents/skills/minecraft-multiloader/SKILL.md",
     required: [
       /minecraft_version=1\.21\.11/,
-      /fabric_api_version=0\.116\.10\+1\.21\.1/,
+      /architectury_version=19\.0\.1/,
+      /fabric_loader_version=0\.18\.4/,
+      /fabric_api_version=0\.141\.4\+1\.21\.11/,
       /neoforge_version=21\.11\.42/,
       /id "architectury-plugin" version "3\.4"/,
-      /loom_version=1\.7/
+      /loom_version=1\.14/,
+      /dev\.architectury:architectury-fabric/,
+      /dev\.architectury:architectury-neoforge/,
+      /loaderVersion = "\[1,\)"/
     ],
     forbidden: [
       /1\.9-SNAPSHOT/,
       /21\.1\.172/,
-      /0\.114\.0\+1\.21\.1/
+      /0\.114\.0\+1\.21\.1/,
+      /0\.116\.10\+1\.21\.1/,
+      /loom_version=1\.7/,
+      /dev\.architectury:architectury-api:/
     ]
   },
   {
@@ -45,7 +54,12 @@ const checks = [
   {
     file: ".agents/skills/minecraft-datapack/SKILL.md",
     required: [
-      /1\.21\.11\s+\| `min_format: 94\.1`, `max_format: 94\.1`/,
+      /1\.21\.11\s+\| `min_format: \[94, 1\]`, `max_format: \[94, 1\]`/,
+      /1\.21\.9 \/ 1\.21\.10\s+\| `min_format: \[88, 0\]`, `max_format: \[88, 0\]`/,
+      /"min_format": \[94, 1\]/,
+      /"max_format": \[94, 1\]/
+    ],
+    forbidden: [
       /"min_format": 94\.1/,
       /"max_format": 94\.1/
     ]
@@ -53,7 +67,12 @@ const checks = [
   {
     file: ".agents/skills/minecraft-resource-pack/SKILL.md",
     required: [
-      /1\.21\.11\s+\| `min_format: 75\.0`, `max_format: 75\.0`/,
+      /1\.21\.9 \/ 1\.21\.10\s+\| `min_format: \[69, 0\]`, `max_format: \[69, 0\]`/,
+      /1\.21\.11\s+\| `min_format: \[75, 0\]`, `max_format: \[75, 0\]`/,
+      /"min_format": \[75, 0\]/,
+      /"max_format": \[75, 0\]/
+    ],
+    forbidden: [
       /"min_format": 75\.0/,
       /"max_format": 75\.0/
     ]
@@ -74,11 +93,14 @@ const checks = [
     file: ".agents/skills/minecraft-modding/references/fabric-api.md",
     required: [
       /minecraft_version=1\.21\.11/,
-      /loader_version=0\.17\.3/,
-      /fabric_version=0\.116\.10\+1\.21\.1/
+      /loader_version=0\.18\.4/,
+      /fabric_version=0\.141\.4\+1\.21\.11/,
+      /yarn_mappings=1\.21\.11\+build\.5/
     ],
     forbidden: [
       /0\.114\.0\+1\.21\.1/,
+      /0\.116\.10\+1\.21\.1/,
+      /loader_version=0\.17\.3/,
       /yarn_mappings=1\.21\.1\+build\.3/
     ]
   },

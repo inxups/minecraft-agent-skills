@@ -29,6 +29,10 @@ Operational best practice:
 2. Keep automatic backups before major region operations.
 3. Use conservative selection + mask constraints before destructive commands.
 
+Compatibility note: stable WorldEdit 7.4.x targets current 1.21.x servers.
+For Minecraft 26.1.x, check the WorldEdit release notes first and stage-test any
+beta or pre-release build before using it on production worlds.
+
 ## Support Assets
 
 - Read `references/safety-checklists.md` before large pastes, destructive replacements, or any edit where rollback discipline matters more than speed.
@@ -82,7 +86,7 @@ Selection safety checks:
 Use masks to constrain scope:
 
 ```mcfunction
-//gmask #natural
+//gmask #existing
 //replace grass_block dirt
 //gmask
 ```
@@ -90,8 +94,8 @@ Use masks to constrain scope:
 Single-command mask approach:
 
 ```mcfunction
-//replace #stone !air
-//replace !#leaves air
+//replace stone,andesite,diorite,granite smooth_stone
+//replace ##leaves air
 ```
 
 Pattern examples:
@@ -141,7 +145,7 @@ Operational guidance:
 //brush smooth 3
 //brush raise 2
 //brush lower 2
-//mask #natural
+//mask #existing
 ```
 
 Reset brush:
@@ -165,7 +169,6 @@ Terraforming safety:
 //undo
 //undo 5
 //redo
-//clearhistory
 ```
 
 Safety policy for production operations:
@@ -175,6 +178,8 @@ Safety policy for production operations:
 4. Continue or `//undo` immediately.
 
 Do not chain many destructive edits without intermediate verification.
+Run `//clearhistory` only after the edit is accepted, a backup or schematic
+checkpoint exists, and the rollback window is closed.
 
 ---
 
@@ -229,7 +234,7 @@ Example cleanup sequence:
 ```mcfunction
 //replace lava air
 //replace water air
-//replace #leaves air
+//replace ##leaves air
 ```
 
 Always scope with selection/mask first to avoid map-wide accidental edits.

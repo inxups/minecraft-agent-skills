@@ -5,12 +5,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [2.5.0] - 2026-05-29
+
 ### Changed
 
+- Refreshed 1.21.x version guidance for Fabric 1.21.11, Architectury multiloader artifacts, MockBukkit 4.x, and Gradle setup actions
+- Corrected 1.21.9+ datapack/resource-pack metadata examples and validators to use exact `[major, minor]` pack versions instead of JSON decimals
+- Added resource-pack validator coverage for 1.21.4+ `assets/<namespace>/items/*.json` item model definitions
+- Updated command examples for 1.21.9 spawn rotation syntax and 1.21.11 namespaced gamerules, and made the bundled stopwatch `.mcfunction` copyable
+- Hardened server-admin, WorldEdit, and EssentialsX ops guidance around Velocity forwarding, backup quiescing, WorldEdit history cleanup, sign-shop permissions, and spawn-module checks
+- Added local mirror-sync validation to `npm run check` and aligned CI to use the same npm script entrypoints
+- Clarified that this bundle remains centered on 1.21.x and that Minecraft 26.1.x requires a separate Java/API/data-format verification pass
 - Hardened the validator fixture harness so expected-pass fixtures preserve failing child-command statuses instead of reporting green after internal validator failures
 - Made bundled datapack, resource-pack, and worldgen validators tolerate CRLF-affected `jq -r` output on Windows/Git Bash by stripping trailing carriage returns before resolving references
 - Refactored `minecraft-plugin-dev` runtime guidance into a leaner `SKILL.md` plus `references/runtime-patterns.md` for scheduler, Folia, PDC, Adventure, YAML config, Vault, and Paper-specific API examples
 - Rebuilt the README workflow SVG with cleaner margins, accessible metadata, stronger typography, and a more restrained Minecraft-adjacent palette
+- Bumped package and plugin metadata to version `2.5.0`
 
 ## [2.4.2] - 2026-05-04
 

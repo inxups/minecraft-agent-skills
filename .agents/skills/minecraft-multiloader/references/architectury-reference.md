@@ -14,7 +14,8 @@ Use this file together with `SKILL.md` when you need the quick alignment rules.
 - Keep `neoforge_version` on the matching `21.<patch>.x` family for that same patch
 - Keep `enabled_platforms=fabric,neoforge`
 - Avoid snapshot-only toolchain pins in shared examples unless you are intentionally documenting a prerelease workflow
-- Keep Fabric API on the stable 1.21.x branch, which still uses the `+1.21.1` suffix for current 1.21.11-compatible releases
+- Keep Fabric API on the exact Minecraft patch suffix you target, for example `+1.21.11` for `minecraft_version=1.21.11`
+- Use the split Architectury artifacts for modern projects: `architectury`, `architectury-fabric`, and `architectury-neoforge`
 
 ## Sanity Check Workflow
 

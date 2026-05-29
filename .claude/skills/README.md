@@ -3,7 +3,10 @@
 This index lists all Minecraft skills in this repository.
 Canonical source files live under `.agents/skills/`, and this README is mirrored
 to compatibility trees.
-All skill content targets Minecraft `1.21.x`.
+All skill content targets Minecraft `1.21.x`. Minecraft 26.1.x changed Java,
+Paper, Fabric, and several vanilla data/command surfaces; treat 26.x work as a
+porting task that requires fresh upstream verification before applying these
+examples unchanged.
 
 Use this index as a quick router before opening individual `SKILL.md` files.
 Some skills also include local `references/` and `scripts/` support assets; the

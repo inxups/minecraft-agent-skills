@@ -536,7 +536,7 @@ jobs:
           java-version: '21'
           distribution: 'microsoft'
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
+        uses: gradle/actions/setup-gradle@v4
       - name: Build with Gradle
         run: ./gradlew build
       - name: Run Game Tests

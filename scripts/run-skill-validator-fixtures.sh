@@ -114,6 +114,7 @@ echo "=== Running Skill Validator Fixtures ==="
 expect_path "tests/fixtures/validators/datapack/valid"
 expect_path "tests/fixtures/validators/datapack/legacy-pack-metadata"
 expect_path "tests/fixtures/validators/datapack/invalid"
+expect_path "tests/fixtures/validators/datapack/invalid-pack-version"
 expect_pass "datapack valid" \
   ./.agents/skills/minecraft-datapack/scripts/validate-datapack.sh \
   --root tests/fixtures/validators/datapack/valid
@@ -123,10 +124,15 @@ expect_pass "datapack legacy pack metadata" \
 expect_fail_contains "datapack invalid" "legacy path detected" \
   ./.agents/skills/minecraft-datapack/scripts/validate-datapack.sh \
   --root tests/fixtures/validators/datapack/invalid
+expect_fail_contains "datapack invalid pack version" "pack.mcmeta must define" \
+  ./.agents/skills/minecraft-datapack/scripts/validate-datapack.sh \
+  --root tests/fixtures/validators/datapack/invalid-pack-version
 
 expect_path "tests/fixtures/validators/resource-pack/valid"
 expect_path "tests/fixtures/validators/resource-pack/legacy-pack-metadata"
 expect_path "tests/fixtures/validators/resource-pack/invalid"
+expect_path "tests/fixtures/validators/resource-pack/invalid-pack-version"
+expect_path "tests/fixtures/validators/resource-pack/invalid-item-model"
 expect_pass "resource-pack valid" \
   ./.agents/skills/minecraft-resource-pack/scripts/validate-resource-pack.sh \
   --root tests/fixtures/validators/resource-pack/valid
@@ -136,6 +142,12 @@ expect_pass "resource-pack legacy pack metadata" \
 expect_fail_contains "resource-pack invalid" "missing texture" \
   ./.agents/skills/minecraft-resource-pack/scripts/validate-resource-pack.sh \
   --root tests/fixtures/validators/resource-pack/invalid
+expect_fail_contains "resource-pack invalid pack version" "pack.mcmeta must define" \
+  ./.agents/skills/minecraft-resource-pack/scripts/validate-resource-pack.sh \
+  --root tests/fixtures/validators/resource-pack/invalid-pack-version
+expect_fail_contains "resource-pack invalid item model" "missing model" \
+  ./.agents/skills/minecraft-resource-pack/scripts/validate-resource-pack.sh \
+  --root tests/fixtures/validators/resource-pack/invalid-item-model
 
 expect_path "tests/fixtures/validators/ci-release/valid/SKILL.md"
 expect_path "tests/fixtures/validators/ci-release/invalid/SKILL.md"

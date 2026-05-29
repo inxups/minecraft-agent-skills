@@ -345,15 +345,23 @@ public class MyScreen extends HandledScreen<MyScreenHandler> {
 
 ## gradle.properties (Fabric Loom template)
 
+The examples in this reference use Yarn/Fabric-named classes such as
+`Identifier`, `ServerPlayerEntity`, and `AbstractBlock.Settings`. Use Yarn
+mappings for Fabric-only projects. Use official Mojang mappings only when a
+shared project intentionally standardizes on Mojmap and the snippets have been
+translated.
+
 ```properties
 org.gradle.jvmargs=-Xmx2G
 
 minecraft_version=1.21.11
-loader_version=0.17.3
-fabric_version=0.116.10+1.21.1
+loader_version=0.18.4
+fabric_version=0.141.4+1.21.11
+yarn_mappings=1.21.11+build.5
 
-# Prefer loom.officialMojangMappings() in shared examples.
-# If you want Yarn, resolve the exact 1.21.11 build from https://fabricmc.net/develop/.
+# Fabric-only examples in this file expect:
+# mappings("net.fabricmc:yarn:$yarn_mappings:v2")
+# Shared multiloader examples can use loom.officialMojangMappings() instead.
 
 mod_version=1.0.0
 maven_group=com.example

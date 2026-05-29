@@ -1,6 +1,6 @@
 ---
 name: minecraft-world-generation
-description: "Create custom world generation content for Minecraft 1.21.x including custom biomes, dimensions, noise settings, surface rules, placed/configured features, carvers, structure sets, and biome modifiers. Covers both the datapack-only approach (JSON worldgen files) and the mod-code approach (NeoForge BiomeModifiers, Fabric BiomeModification API, code-driven worldgen registration with DeferredRegister). Includes JSON schemas for biome, noise_settings, placed_feature, configured_feature, structure, structure_set, and processor_list files. Targets Minecraft 1.21.x with official Mojang mappings. Use when the user asks about Minecraft worldgen, custom biomes, datapack JSON for dimensions or features, or mod-based biome modification with NeoForge or Fabric."
+description: "Create custom world generation content for Minecraft 1.21.x including custom biomes, dimensions, noise settings, surface rules, placed/configured features, carvers, structure sets, and biome modifiers. Covers both the datapack-only approach (JSON worldgen files) and the mod-code approach (NeoForge BiomeModifiers, Fabric BiomeModification API, code-driven worldgen registration with DeferredRegister). Includes compact JSON patterns and validator-backed reference checks for biome, dimension, placed_feature, configured_feature, structure, structure_set, and biome_modifier files. Targets Minecraft 1.21.x with official Mojang mappings. Use when the user asks about Minecraft worldgen, custom biomes, datapack JSON for dimensions or features, or mod-based biome modification with NeoForge or Fabric."
 ---
 
 # Minecraft World Generation Skill
@@ -62,6 +62,12 @@ data/<namespace>/
 ---
 
 ## Custom Biome JSON
+
+The biome and dimension examples below match the 1.21.10-and-earlier worldgen
+shape. Minecraft 1.21.11 moves many visual/environment fields into Environment
+Attributes and Timelines, so for 1.21.11+ projects first verify the current
+vanilla registry JSON or generate from a known-good tool before copying old
+`effects` fields into new packs.
 
 ### `data/<namespace>/worldgen/biome/my_biome.json`
 ```json
@@ -229,6 +235,12 @@ data/<namespace>/
 ---
 
 ## Dimension Type
+
+The following dimension type is the 1.21.10-and-earlier shape. For 1.21.11+
+dimension work, prefer starting from the current vanilla dimension type and
+environment attribute registries, then validate in a fresh test world before
+shipping. Do not assume older `effects`, `fixed_time`, or bed/anchor booleans
+still model every environment behavior on newer runtimes.
 
 ### `data/<namespace>/dimension_type/my_type.json`
 ```json

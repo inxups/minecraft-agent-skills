@@ -55,7 +55,7 @@ public class MyMod {
 
 ```toml
 modLoader="javafml"
-loaderVersion="[21,)"
+loaderVersion="[1,)"
 license="MIT"
 
 [[mods]]
@@ -70,7 +70,7 @@ logoFile="mymod.png"
 [[dependencies.mymod]]
 modId="neoforge"
 type="required"
-versionRange="[21.1,)"
+versionRange="[21.11,)"
 ordering="NONE"
 side="BOTH"
 

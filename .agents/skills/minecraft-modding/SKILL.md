@@ -168,7 +168,7 @@ Every registry entry needs a namespaced ID:
 // NeoForge / vanilla Java
 ResourceLocation id = ResourceLocation.fromNamespaceAndPath("mymod", "my_block");
 
-// Fabric (same class, same API in 1.21)
+// Fabric with Yarn mappings
 Identifier id = Identifier.of("mymod", "my_block");
 ```
 

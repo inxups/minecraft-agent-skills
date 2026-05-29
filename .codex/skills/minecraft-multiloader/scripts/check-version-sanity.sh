@@ -27,6 +27,7 @@ Checks common Architectury multiloader version-alignment rules:
 - enabled_platforms includes fabric and neoforge
 - no snapshot-only toolchain pins unless you accept warnings
 - NeoForge version family matches the Minecraft patch line
+- Fabric API suffix matches the Minecraft patch line
 USAGE
       exit 0
       ;;
@@ -105,10 +106,10 @@ else
   warn "minecraft_version is outside the documented 1.21.x scope: $MINECRAFT_VERSION"
 fi
 
-if [[ -n "$FABRIC_API_VERSION" && "$FABRIC_API_VERSION" == *+1.21.1 ]]; then
-  pass "fabric_api_version is on the stable 1.21.x branch"
+if [[ -n "$FABRIC_API_VERSION" && "$FABRIC_API_VERSION" == *+"$MINECRAFT_VERSION" ]]; then
+  pass "fabric_api_version suffix matches minecraft_version (+$MINECRAFT_VERSION)"
 else
-  warn "fabric_api_version is not on the expected 1.21.x branch suffix (+1.21.1)"
+  warn "fabric_api_version suffix should match minecraft_version (+$MINECRAFT_VERSION)"
 fi
 
 echo ""

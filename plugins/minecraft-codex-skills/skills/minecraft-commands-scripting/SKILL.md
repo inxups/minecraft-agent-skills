@@ -467,13 +467,21 @@ weather clear 6000
 weather rain 12000
 weather thunder 6000
 
-# Gamerules (1.21.x)
+# Gamerules (1.21.10 and earlier camelCase names)
 gamerule doDaylightCycle false
 gamerule doMobSpawning false
 gamerule keepInventory true
 gamerule spawnRadius 0
 gamerule playersSleepingPercentage 0   # one player can skip night
 gamerule universalAnger true
+
+# Gamerules (1.21.11+ registry IDs)
+gamerule minecraft:advance_time false
+gamerule minecraft:spawn_mobs false
+gamerule minecraft:keep_inventory true
+gamerule minecraft:respawn_radius 0
+gamerule minecraft:players_sleeping_percentage 0
+gamerule minecraft:universal_anger true
 
 # Difficulty
 difficulty peaceful
@@ -482,10 +490,12 @@ difficulty normal
 difficulty hard
 
 # Setworldspawn
-setworldspawn 0 64 0 0.0   # x y z angle
+setworldspawn 0 64 0 0.0        # 1.21.8 and earlier: x y z angle
+setworldspawn 0 64 0 0.0 0.0    # 1.21.9+: x y z yaw pitch
 
 # Spawnpoint per player
-spawnpoint @s ~ ~ ~ 0.0
+spawnpoint @s ~ ~ ~ 0.0         # 1.21.8 and earlier: x y z angle
+spawnpoint @s ~ ~ ~ 0.0 0.0     # 1.21.9+: x y z yaw pitch
 
 # forceload
 forceload add 0 0 31 31     # keep chunks 0,0 to 31,31 loaded

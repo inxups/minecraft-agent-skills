@@ -24,11 +24,16 @@ description: "Create, edit, and debug Minecraft vanilla datapacks for 1.21.x. Co
 | 1.21.5            | `pack_format: 71` |
 | 1.21.6            | `pack_format: 80` |
 | 1.21.7 / 1.21.8   | `pack_format: 81` |
-| 1.21.9 / 1.21.10  | `min_format: 88.0`, `max_format: 88.0` |
-| 1.21.11           | `min_format: 94.1`, `max_format: 94.1` |
+| 1.21.9 / 1.21.10  | `min_format: [88, 0]`, `max_format: [88, 0]` |
+| 1.21.11           | `min_format: [94, 1]`, `max_format: [94, 1]` |
 
 Use `pack_format` through 1.21.8. Starting in 1.21.9, Mojang replaced that
 single field with explicit `min_format` / `max_format` values.
+For exact patch targeting, use `[major, minor]` arrays for both `min_format` and
+`max_format`, including `.0` versions such as `[88, 0]`. A single integer is
+equivalent to `[major, 0]` for `min_format`, while a single integer in
+`max_format` allows any minor version on that major line. Do not write decimal
+JSON numbers such as `94.1`.
 
 Keep `pack.mcmeta` exact for the patch you target instead of trying to span the
 entire 1.21.x line with one metadata block.
@@ -80,13 +85,25 @@ my-datapack/
 }
 ```
 
-### 1.21.9 and newer
+### 1.21.9 / 1.21.10
 
 ```json
 {
   "pack": {
-    "min_format": 94.1,
-    "max_format": 94.1,
+    "min_format": [88, 0],
+    "max_format": [88, 0],
+    "description": "My Custom Datapack v1.0"
+  }
+}
+```
+
+### 1.21.11
+
+```json
+{
+  "pack": {
+    "min_format": [94, 1],
+    "max_format": [94, 1],
     "description": "My Custom Datapack v1.0"
   }
 }

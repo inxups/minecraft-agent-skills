@@ -81,13 +81,13 @@ class CooldownManagerTest {
 ```kotlin
 repositories {
     maven("https://repo.papermc.io/repository/maven-public/")
-    maven("https://repo.mockbukkit.org/artifactory/mockbukkit/")
+    mavenCentral()
 }
 
 dependencies {
     compileOnly("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
     testImplementation("org.junit.jupiter:junit-jupiter:5.11.0")
-    testImplementation("com.github.seeseemelk:MockBukkit-v1.21:3.127.0")
+    testImplementation("org.mockbukkit.mockbukkit:mockbukkit-v1.21:4.0.0")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
@@ -98,9 +98,9 @@ tasks.test {
 
 ### Setup / teardown pattern
 ```java
-import be.seeseemelk.mockbukkit.MockBukkit;
-import be.seeseemelk.mockbukkit.ServerMock;
-import be.seeseemelk.mockbukkit.entity.PlayerMock;
+import org.mockbukkit.mockbukkit.MockBukkit;
+import org.mockbukkit.mockbukkit.ServerMock;
+import org.mockbukkit.mockbukkit.entity.PlayerMock;
 import org.junit.jupiter.api.*;
 
 class MyPluginTest {
@@ -446,7 +446,7 @@ jobs:
         steps:
             - uses: actions/checkout@v4
             - { uses: actions/setup-java@v4, with: { java-version: '21', distribution: 'temurin' } }
-            - uses: gradle/actions/setup-gradle@v3
+            - uses: gradle/actions/setup-gradle@v4
             - { name: Run unit tests, run: ./gradlew test }
 
     game-tests:
@@ -454,7 +454,7 @@ jobs:
         steps:
             - uses: actions/checkout@v4
             - { uses: actions/setup-java@v4, with: { java-version: '21', distribution: 'temurin' } }
-            - uses: gradle/actions/setup-gradle@v3
+            - uses: gradle/actions/setup-gradle@v4
             - { name: Run GameTests (headless), run: ./gradlew runGameTestServer, env: { CI: true } }
 
     layout-checks:
@@ -469,7 +469,7 @@ jobs:
 ## References
 
 - MockBukkit GitHub: https://github.com/MockBukkit/MockBukkit
-- MockBukkit docs: https://mockbukkit.readthedocs.io/
+- MockBukkit docs: https://docs.mockbukkit.org/
 - NeoForge GameTest docs: https://docs.neoforged.net/docs/misc/gametest/
 - Fabric GameTest API: https://wiki.fabricmc.net/tutorial:gametests
 - JUnit 5 user guide: https://junit.org/junit5/docs/current/user-guide/

@@ -69,7 +69,7 @@ jobs:
           distribution: "temurin"
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
+        uses: gradle/actions/setup-gradle@v4
         with:
           cache-read-only: ${{ github.ref != 'refs/heads/main' }}
 
@@ -119,7 +119,7 @@ jobs:
           distribution: "temurin"
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
@@ -170,7 +170,7 @@ jobs:
         with:
           java-version: "21"
           distribution: "temurin"
-      - uses: gradle/actions/setup-gradle@v3
+      - uses: gradle/actions/setup-gradle@v4
       - run: chmod +x gradlew
       - run: ./gradlew shadowJar --no-daemon
       - uses: actions/upload-artifact@v4
@@ -186,7 +186,7 @@ jobs:
         with:
           java-version: "21"
           distribution: "temurin"
-      - uses: gradle/actions/setup-gradle@v3
+      - uses: gradle/actions/setup-gradle@v4
       - run: ./gradlew test --no-daemon
 ```
 
@@ -357,7 +357,7 @@ updates:
 ```yaml
 # In all workflow jobs:
 - name: Setup Gradle
-  uses: gradle/actions/setup-gradle@v3
+  uses: gradle/actions/setup-gradle@v4
   with:
     # Read-only cache on PRs, read-write on main
     cache-read-only: ${{ github.event_name == 'pull_request' }}
