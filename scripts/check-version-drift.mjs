@@ -10,8 +10,8 @@ const checks = [
     required: [
       /Paper 1\.21\.11 server/,
       /Fabric\|1\.21\.11 line \(`fabric-api:0\.141\.4\+1\.21\.11`, Loom 1\.14\)\|21/,
-      /Vanilla datapack\|1\.21-1\.21\.11 \(formats 48-94\.1; 1\.21\.11 exact metadata uses `\[94, 1\]` full-version arrays\)\|-/,
-      /Resource pack\|1\.21-1\.21\.11 \(formats 34-75\.0; 1\.21\.11 exact metadata uses `\[75, 0\]` full-version arrays\)\|-/
+      /Vanilla datapack\|1\.21-1\.21\.11 \(`pack_format` 48-81 through 1\.21\.8; exact 1\.21\.11 metadata uses `\[94, 1\]` full-version arrays\)\|-/,
+      /Resource pack\|1\.21-1\.21\.11 \(`pack_format` 34-64 through 1\.21\.8; exact 1\.21\.11 metadata uses `\[75, 0\]` full-version arrays\)\|-/
     ]
   },
   {
