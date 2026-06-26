@@ -4,7 +4,7 @@
 
 Do not report security vulnerabilities in a public GitHub issue.
 
-Use GitHub Security / private vulnerability reporting if it is available for this repository. If that workflow is unavailable, open a minimal public issue asking for a private contact path and do not include exploit details, proof-of-concept payloads, secrets, or affected private infrastructure details.
+Use GitHub Security / private vulnerability reporting for this repository. If that workflow appears unavailable, open a minimal public issue asking maintainers to enable private vulnerability reporting for this repository; do not include exploit details, proof-of-concept payloads, secrets, or affected private infrastructure details in the public issue.
 
 ## What To Include
 

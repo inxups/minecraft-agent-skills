@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- Corrected the modding registry cheat sheet to use current 1.21.x NeoForge/Fabric registry constants instead of stale `Registry.*` names
+- Replaced an invalid command-scripting `tellraw` translatable-text example with copyable raw JSON text components
+- Clarified that bundled worldgen biome and dimension JSON examples are structural guidance for 1.21.10-and-earlier shapes and require exact vanilla-registry verification before use on 1.21.11+ packs
+- Updated contributor and mirror documentation to prefer npm script entrypoints for sync/check workflows, and tightened security-reporting fallback wording around GitHub private vulnerability reporting
+
 ## [2.5.1] - 2026-06-13
 
 ### Added

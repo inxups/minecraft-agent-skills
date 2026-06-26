@@ -9,11 +9,23 @@ Thanks for contributing to `minecraft-agent-skills`.
 - Keep examples accurate for Minecraft `1.21.x` and Java `21`.
 - Prefer small, reviewable pull requests that change one skill, validator, or repo policy area at a time.
 
+## Before You Start
+
+Repo development tooling requires Node `20+`. Install pinned local dependencies
+before running repo checks:
+
+```bash
+npm ci
+```
+
+On Windows, prefer the npm script entrypoints below. Use Git Bash or WSL only
+when running the lower-level shell scripts directly.
+
 ## Local Workflow
 
 1. Edit the canonical source under `.agents/skills/` or the relevant repo-level docs/scripts.
 2. Sync mirrored skill trees:
-   `bash ./scripts/sync-skills-layout.sh sync`
+   `npm run sync:skills`
 3. Run the full repo gate:
    `npm run check`
 4. Update `CHANGELOG.md` for user-facing skill changes, validation changes, or repo workflow changes.

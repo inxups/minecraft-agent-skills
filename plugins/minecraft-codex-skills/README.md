@@ -25,7 +25,7 @@ plugins/minecraft-codex-skills/
 - Do not edit `skills/` directly in this plugin.
 - Edit `.agents/skills/` in the repo root.
 - Maintain `.agents/skills/README.md` as the canonical skill index.
-- Run `./scripts/sync-skills-layout.sh sync` to refresh `.codex/skills/`,
+- Run `npm run sync:skills` from the repo root to refresh `.codex/skills/`,
   `.claude/skills/`, and this plugin bundle (including mirrored `skills/README.md`).
 
 ## Compatibility
@@ -61,7 +61,7 @@ claude --plugin-dir ./plugins/minecraft-codex-skills
 ## Troubleshooting
 
 - If a local plugin edit does not appear in Codex, reinstall the plugin or restart Codex so it refreshes the cached local copy under `~/.codex/plugins/cache/`.
-- If `skills/` looks stale, sync from the canonical tree again before debugging manifests: `bash ./scripts/sync-skills-layout.sh sync`.
+- If `skills/` looks stale, sync from the canonical tree again before debugging manifests: `npm run sync:skills`.
 - If plugin validation fails, run `node ./scripts/validate-plugin-bundle.mjs` from the repo root to catch manifest or README drift.
 - On Windows, run the repo shell scripts from Git Bash or WSL so `bash`, `jq`, and `rsync` are available on `PATH`.
 

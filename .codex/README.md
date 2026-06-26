@@ -7,7 +7,7 @@ This directory is a compatibility mirror of the canonical skills tree at:
 Do not edit mirror files directly. Edit canonical skills first, then sync:
 
 ```bash
-bash ./scripts/sync-skills-layout.sh sync
+npm run sync:skills
 npm run audit:skills
 ```
 
