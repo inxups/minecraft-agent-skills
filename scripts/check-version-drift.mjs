@@ -10,8 +10,40 @@ const checks = [
     required: [
       /Paper 1\.21\.11 server/,
       /Fabric\|1\.21\.11 line \(`fabric-loader:0\.19\.3`, `fabric-api:0\.141\.4\+1\.21\.11`, Loom 1\.17\.11\)\|21/,
+      /Forge\|1\.20\.1 legacy lane \(`forge_version=47\.4\.x`, ForgeGradle 6\)\|17/,
       /Vanilla datapack\|1\.21-1\.21\.11 \(`pack_format` 48-81 through 1\.21\.8; exact 1\.21\.11 metadata uses `\[94, 1\]` full-version arrays\)\|-/,
       /Resource pack\|1\.21-1\.21\.11 \(`pack_format` 34-64 through 1\.21\.8; exact 1\.21\.11 metadata uses `\[75, 0\]` full-version arrays\)\|-/
+    ]
+  },
+  {
+    file: ".agents/skills/minecraft-modding/SKILL.md",
+    required: [
+      /legacy Forge 1\.20\.1/,
+      /Forge 1\.20\.1 project signature/,
+      /references\/forge-1\.20\.1-api\.md/,
+      /ForgeRegistries\.BLOCKS/,
+      /FMLJavaModLoadingContext/,
+      /Forge\*\* \| 1\.20\.1 legacy lane/,
+      /Loot table JSON -> 1\.21\.x: `data\/<modid>\/loot_table\/blocks\/<name>\.json`; Forge 1\.20\.1: `data\/<modid>\/loot_tables\/blocks\/<name>\.json`/
+    ]
+  },
+  {
+    file: ".agents/skills/minecraft-modding/references/forge-1.20.1-api.md",
+    required: [
+      /minecraft_version=1\.20\.1/,
+      /forge_version=47\.4\.20/,
+      /java\.toolchain\.languageVersion = JavaLanguageVersion\.of\(17\)/,
+      /src\/main\/resources\/META-INF\/mods\.toml/,
+      /FMLJavaModLoadingContext context/,
+      /MinecraftForge\.EVENT_BUS/,
+      /ForgeRegistries\.BLOCKS/,
+      /RegistryObject<Block>/,
+      /NetworkRegistry\.newSimpleChannel/,
+      /modEventBus\.addListener\(ModDataGen::gatherData\)/,
+      /class ModBlockStateProvider extends BlockStateProvider/,
+      /class ModRecipeProvider extends RecipeProvider/,
+      /class ModItemTagsProvider extends ItemTagsProvider/,
+      /data\/<modid>\/loot_tables\/blocks\/<block>\.json/
     ]
   },
   {
@@ -80,6 +112,16 @@ const checks = [
     forbidden: [
       /"min_format": 75\.0/,
       /"max_format": 75\.0/
+    ]
+  },
+  {
+    file: ".agents/skills/minecraft-modding/scripts/check-build.sh",
+    required: [
+      /PLATFORM="forge"/,
+      /parse_java_major/,
+      /MINECRAFT_VERSION" == "1\.20\.1"/,
+      /REQUIRED_JAVA=17/,
+      /src\/main\/resources\/META-INF\/mods\.toml/
     ]
   },
   {
