@@ -1,25 +1,18 @@
 # Security Policy
 
+This repository contains skills, docs, validators, and plugin metadata. It does not run a hosted service, but security issues can still matter.
+
 ## Reporting
 
 Do not report security vulnerabilities in a public GitHub issue.
 
-Use GitHub Security / private vulnerability reporting for this repository. If that workflow appears unavailable, open a minimal public issue asking maintainers to enable private vulnerability reporting for this repository; do not include exploit details, proof-of-concept payloads, secrets, or affected private infrastructure details in the public issue.
+Use GitHub Security / private vulnerability reporting. If private reporting is unavailable, open a public issue asking maintainers to enable it, but do not include exploit details, secrets, payloads, or private infrastructure information.
 
-## What To Include
+## In Scope
 
-- A short description of the issue and affected files or workflows
-- Reproduction steps
-- Expected impact
-- Any suggested remediation or containment steps
+- Unsafe validator or helper-script behavior
+- Guidance that could expose secrets or encourage unsafe defaults
+- Plugin packaging or marketplace metadata that could mislead users
+- Accidental credentials, tokens, or sensitive data in examples, fixtures, or docs
 
-## Scope Notes
-
-This repository primarily ships skills, docs, validators, and plugin metadata. Relevant reports still include:
-
-- Unsafe validator behavior
-- Guidance that could cause secret exposure
-- Plugin packaging or marketplace metadata issues that could mislead users
-- Docs or scripts that encourage unsafe defaults in public or shared environments
-
-Please keep reports private until a fix is prepared and maintainers confirm disclosure timing.
+Please keep reports private until maintainers confirm a fix and disclosure timing.
