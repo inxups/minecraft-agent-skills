@@ -62,10 +62,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Java 21
+      - name: Set up Java 25
         uses: actions/setup-java@v4
         with:
-          java-version: "21"
+          java-version: "25"
           distribution: "temurin"
 
       - name: Setup Gradle
@@ -112,10 +112,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Java 21
+      - name: Set up Java 25
         uses: actions/setup-java@v4
         with:
-          java-version: "21"
+          java-version: "25"
           distribution: "temurin"
 
       - name: Setup Gradle
@@ -168,7 +168,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with:
-          java-version: "21"
+          java-version: "25"
           distribution: "temurin"
       - uses: gradle/actions/setup-gradle@v4
       - run: chmod +x gradlew
@@ -184,7 +184,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with:
-          java-version: "21"
+          java-version: "25"
           distribution: "temurin"
       - uses: gradle/actions/setup-gradle@v4
       - run: ./gradlew test --no-daemon
@@ -210,7 +210,7 @@ modrinth {
 
     uploadFile.set(tasks.remapJar)      // the JAR to upload
 
-    gameVersions.addAll("1.21.11")
+    gameVersions.addAll("26.2")
     loaders.addAll("fabric")
 
     changelog.set(
@@ -259,10 +259,10 @@ tasks.register<net.darkhax.curseforgegradle.TaskPublishCurseForge>("curseforge")
         .trim()
 
     cf.releaseType = "release"
-    cf.addGameVersion("1.21.11")
+    cf.addGameVersion("26.2")
     cf.addModLoader("Fabric")     // "NeoForge" for NeoForge subproject
     cf.addRequirement("fabric-api")
-    // cf.addJavaVersion("Java 21")
+    // cf.addJavaVersion("Java 25")
 
     // Replace PROJECT_ID with your numeric CurseForge project ID
 }
@@ -280,7 +280,7 @@ Never hardcode tokens. Read them from environment:
 # gradle.properties (committed)
 mod_id=mymod
 mod_version=1.0.0
-minecraft_version=1.21.11
+minecraft_version=26.2
 modrinth_project_id=AABBCCDD
 curseforge_project_id=123456
 
@@ -314,7 +314,7 @@ curseforge_project_id=123456
 - PDC-based kill tracker
 
 ### Fixed
-- Death message not appearing on Paper 1.21.11
+- Death message not appearing on Paper 26.2
 
 ## [1.0.0] — 2025-05-01
 ### Added
