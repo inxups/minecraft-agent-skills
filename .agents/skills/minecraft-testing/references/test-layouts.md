@@ -1,4 +1,4 @@
-# Minecraft Testing Layouts (1.21.x)
+# Minecraft Testing Layouts
 
 Use these layouts as the default shape for testable projects.
 
