@@ -1,164 +1,82 @@
 ---
 name: minecraft-world-generation
-description: "Create custom world generation content for Minecraft 1.21.x including custom biomes, dimensions, noise settings, surface rules, placed/configured features, carvers, structure sets, and biome modifiers. Covers both the datapack-only approach (JSON worldgen files) and the mod-code approach (NeoForge BiomeModifiers, Fabric BiomeModification API, code-driven worldgen registration with DeferredRegister). Includes compact JSON patterns and validator-backed reference checks for biome, dimension, placed_feature, configured_feature, structure, structure_set, and biome_modifier files. Targets Minecraft 1.21.x with official Mojang mappings, with explicit verification required before applying 1.21.10-and-earlier biome or dimension JSON shapes to 1.21.11+ packs. Use when the user asks about Minecraft worldgen, custom biomes, datapack JSON for dimensions or features, or mod-based biome modification with NeoForge or Fabric."
+description: "Create world generation content for Minecraft 26.2 NeoForge mods and datapack resources, including configured and placed features, biomes, dimensions, structures, structure sets, template pools, tags, and NeoForge biome modifiers. Use when Codex needs to design registry-backed worldgen data, preserve 26.2 runtime schemas, diagnose missing local references, or wire worldgen datagen into a NeoForge project."
 ---
 
 # Minecraft World Generation Skill
 
-## Two Approaches to Custom Worldgen
+Use this skill for registry-backed worldgen data. Use `minecraft-modding` for
+unrelated gameplay systems and Java integration outside worldgen.
 
-| Approach | Best When | Platform |
-|----------|-----------|----------|
-| **Datapack JSON** | Overriding/extending vanilla worldgen | Vanilla, any server |
-| **Mod + Datagen** | Registering new biomes/dimensions, code-driven | NeoForge / Fabric |
-| **Biome Modifier (NeoForge)** | Adding features/spawns to existing biomes | NeoForge |
-| **BiomeModification API (Fabric)** | Adding features/spawns to existing biomes | Fabric |
+## Version Gate
 
-### Routing Boundaries
-- `Use when`: the task is biome/dimension/feature/structure worldgen design or registration.
-- `Do not use when`: the task is general non-worldgen datapack work (recipes, advancements, predicates, function orchestration) (`minecraft-datapack`).
-- `Do not use when`: the task is non-worldgen mod systems (items, entities, GUI, gameplay logic) (`minecraft-modding`).
+Minecraft 26.2 changed several data-driven surfaces. Do not copy older biome,
+dimension type, noise-settings, environment, or timeline JSON into a
+26.2 project.
 
----
+Before editing those registries:
 
-## Directory Layout (Datapack / Mod Resources)
+1. Read the target project's Minecraft and NeoForge versions.
+2. Export or inspect the exact 26.2 vanilla registry entry used as the baseline.
+3. Preserve fields and referenced registries that are not part of the requested
+   change.
+4. Validate locally, then test in a fresh world.
 
-```
-data/<namespace>/
-├── worldgen/
-│   ├── biome/
-│   │   └── my_biome.json
-│   ├── configured_feature/
-│   │   └── my_ore.json
-│   ├── placed_feature/
-│   │   └── my_ore_placed.json
-│   ├── noise_settings/
-│   │   └── my_dimension_noise.json
-│   ├── density_function/
-│   │   └── my_density.json    (advanced)
-│   ├── structure/
-│   │   └── my_structure.json
-│   ├── structure_set/
-│   │   └── my_structures.json
-│   ├── processor_list/
-│   │   └── my_processors.json
-│   ├── template_pool/
-│   │   └── my_pool.json
-│   └── carver/
-│       └── my_carver.json
-├── dimension/
-│   └── my_dimension.json
-├── dimension_type/
-│   └── my_type.json
-├── tags/
-│   └── worldgen/
-│       └── biome/
-│           └── is_forest.json
-└── neoforge/
-    └── biome_modifier/      (NeoForge mod only)
-        └── add_ores.json
-```
+At the repository's 2026-07-15 baseline, the newest published NeoForge 26.2
+artifact is `26.2.0.15-beta`. Recheck the project's configured version instead
+of silently upgrading it or assuming a stable release exists.
 
----
+## Resource Layout
 
-## Custom Biome JSON
+~~~text
+src/main/resources/
+  data/<namespace>/
+    worldgen/
+      biome/
+      configured_feature/
+      placed_feature/
+      noise_settings/
+      structure/
+      structure_set/
+      processor_list/
+      template_pool/
+    dimension/
+    dimension_type/
+    structure/
+    tags/worldgen/<registry>/
+    neoforge/biome_modifier/
+~~~
 
-The biome and dimension examples below match the 1.21.10-and-earlier worldgen
-shape. Minecraft 1.21.11 moves many visual/environment fields into Environment
-Attributes and Timelines, so for 1.21.11+ projects first verify the current
-vanilla registry JSON or generate from a known-good tool before copying old
-`effects` fields into new packs.
+Use singular registry directory names. Structure templates belong under
+`data/<namespace>/structure/<path>.nbt`.
 
-For 1.21.11+ targets, treat the biome and dimension-type snippets in this file
-as structural orientation, not as copy-paste release artifacts. Start from a
-current vanilla export or generator output for the exact patch, preserve the
-new environment/timeline registries it uses, then apply only the feature,
-spawn, structure, or biome-source edits needed for the task.
+## Reference Model
 
-### `data/<namespace>/worldgen/biome/my_biome.json`
-```json
-{
-  "has_precipitation": true,
-  "temperature": 0.7,
-  "temperature_modifier": "none",
-  "downfall": 0.8,
-  "effects": {
-    "sky_color": 7907327,
-    "fog_color": 12638463,
-    "water_color": 4159204,
-    "water_fog_color": 329011,
-    "grass_color_modifier": "none",
-    "ambient_sound": "minecraft:ambient.cave",
-    "mood_sound": {
-      "sound": "minecraft:ambient.cave",
-      "tick_delay": 6000,
-      "block_search_extent": 8,
-      "offset": 2.0
-    }
-  },
-  "spawners": {
-    "monster": [
-      { "type": "minecraft:zombie", "weight": 95, "minCount": 4, "maxCount": 4 },
-      { "type": "minecraft:skeleton", "weight": 100, "minCount": 4, "maxCount": 4 }
-    ],
-    "creature": [
-      { "type": "minecraft:sheep", "weight": 12, "minCount": 4, "maxCount": 4 }
-    ],
-    "ambient": [],
-    "axolotls": [],
-    "underground_water_creature": [],
-    "water_creature": [],
-    "water_ambient": [],
-    "misc": []
-  },
-  "spawn_costs": {},
-  "carvers": {
-    "air": ["minecraft:cave", "minecraft:cave_extra_underground", "minecraft:canyon"]
-  },
-  "features": [
-    [],
-    [],
-    ["minecraft:lake_lava_underground", "minecraft:lake_lava_surface"],
-    ["minecraft:amethyst_geode", "minecraft:monster_room"],
-    [],
-    [],
-    [
-      "minecraft:ore_dirt", "minecraft:ore_gravel", "minecraft:ore_granite_upper",
-      "minecraft:ore_coal_upper", "minecraft:ore_coal_lower",
-      "<namespace>:my_ore_placed"
-    ],
-    [],
-    ["minecraft:spring_lava"],
-    [],
-    ["minecraft:freeze_top_layer"]
-  ]
-}
-```
+Keep these relationships intact:
 
-> The `features` array has exactly 11 slots (indices 0–10), one per `GenerationStep.Decoration`:
->
-> | Index | Step | Put here |
-> |-------|------|---------|
-> | 0 | `RAW_GENERATION` | (rarely used) |
-> | 1 | `LAKES` | Surface water/lava lakes |
-> | 2 | `LOCAL_MODIFICATIONS` | Underground lava lakes, geodes |
-> | 3 | `UNDERGROUND_STRUCTURES` | Amethyst geodes, dungeons |
-> | 4 | `SURFACE_STRUCTURES` | Glaciers, blue ice patches |
-> | 5 | `STRONGHOLDS` | (unused in biome JSON) |
-> | 6 | `UNDERGROUND_ORES` | **All ores go here** |
-> | 7 | `UNDERGROUND_DECORATION` | Fossils, infested stone |
-> | 8 | `FLUID_SPRINGS` | `spring_water`, `spring_lava` |
-> | 9 | `VEGETAL_DECORATION` | Trees, grass, flowers |
-> | 10 | `TOP_LAYER_MODIFICATION` | `freeze_top_layer` |
->
-> Custom ores added via placed features must be placed at index **6**.
+~~~text
+dimension -> dimension_type
+dimension noise generator -> worldgen/noise_settings
+placed_feature -> configured_feature
+biome feature entry -> placed_feature
+NeoForge add_features modifier -> placed_feature
+structure_set entry -> structure or structure tag
+jigsaw structure -> template_pool
+single_pool_element -> structure template + processor_list
+~~~
 
----
+Unqualified references inherit the source namespace. A reference to another
+namespace can only be checked locally when that namespace's registry directory
+is present. Vanilla and dependency-provided references may be external.
 
-## Configured Feature
+## Configured And Placed Features
 
-### `data/<namespace>/worldgen/configured_feature/my_ore.json`
-```json
+Use the configured feature for what is generated and the placed feature for
+where and how often it is attempted.
+
+`data/mymod/worldgen/configured_feature/my_ore.json`:
+
+~~~json
 {
   "type": "minecraft:ore",
   "config": {
@@ -169,39 +87,21 @@ spawn, structure, or biome-source edits needed for the task.
           "tag": "minecraft:stone_ore_replaceables"
         },
         "state": {
-          "Name": "minecraft:emerald_ore"
+          "Name": "mymod:my_ore"
         }
       }
     ],
-    "size": 4,
+    "size": 6,
     "discard_chance_on_air_exposure": 0.0
   }
 }
-```
+~~~
 
-### Other feature types
-| Type | Use |
-|------|-----|
-| `minecraft:ore` | Ore veins |
-| `minecraft:tree` | Tree placement |
-| `minecraft:random_patch` | Grass, flowers, mushrooms |
-| `minecraft:block_pile` | Hay bales, pumpkins |
-| `minecraft:lake` | Water/lava lakes |
-| `minecraft:disk` | Sand/gravel/clay disks |
-| `minecraft:no_bonemeal_flower` | Wither roses, etc. |
-| `minecraft:simple_block` | Single block placement |
-| `minecraft:fill_layer` | Fill an entire layer |
-| `minecraft:geode` | Amethyst geodes |
-| `minecraft:decorated` | Wraps another feature with placement |
+`data/mymod/worldgen/placed_feature/my_ore.json`:
 
----
-
-## Placed Feature
-
-### `data/<namespace>/worldgen/placed_feature/my_ore_placed.json`
-```json
+~~~json
 {
-  "feature": "<namespace>:my_ore",
+  "feature": "mymod:my_ore",
   "placement": [
     {
       "type": "minecraft:count",
@@ -211,381 +111,85 @@ spawn, structure, or biome-source edits needed for the task.
       "type": "minecraft:in_square"
     },
     {
-      "type": "minecraft:height_range",
-      "height": {
-        "type": "minecraft:trapezoid",
-        "min_inclusive": { "above_bottom": 0 },
-        "max_inclusive": { "absolute": 64 }
-      }
-    },
-    {
       "type": "minecraft:biome"
     }
   ]
 }
-```
+~~~
 
-### Common placement modifiers
-| Type | Effect |
-|------|--------|
-| `minecraft:count` | Number of attempts |
-| `minecraft:count_on_every_layer` | Per layer |
-| `minecraft:in_square` | Randomize X/Z within chunk |
-| `minecraft:biome` | Only place if biome has this feature |
-| `minecraft:height_range` | Y-level range |
-| `minecraft:surface_relative_threshold_filter` | Filter by surface depth |
-| `minecraft:noise_based_count` | Count varies with noise |
-| `minecraft:rarity_filter` | 1-in-N chance |
-| `minecraft:environment_scan` | Scans up/down for a condition |
+Do not guess a height-provider schema. Copy the exact 26.2 vanilla placement
+modifier that matches the desired distribution, then change only its bounds.
 
----
+## NeoForge Biome Modifier
 
-## Dimension Type
+Use the singular path
+`data/<namespace>/neoforge/biome_modifier/<name>.json`.
 
-The following dimension type is the 1.21.10-and-earlier shape. For 1.21.11+
-dimension work, prefer starting from the current vanilla dimension type and
-environment attribute registries, then validate in a fresh test world before
-shipping. Do not assume older `effects`, `fixed_time`, or bed/anchor booleans
-still model every environment behavior on newer runtimes.
-
-### `data/<namespace>/dimension_type/my_type.json`
-```json
-{
-  "ultrawarm": false,
-  "natural": true,
-  "coordinate_scale": 1.0,
-  "has_skylight": true,
-  "has_ceiling": false,
-  "ambient_light": 0.0,
-  "monster_spawn_light_level": {
-    "type": "minecraft:uniform",
-    "min_inclusive": 0,
-    "max_inclusive": 7
-  },
-  "monster_spawn_block_light_limit": 0,
-  "piglin_safe": false,
-  "bed_works": true,
-  "respawn_anchor_works": false,
-  "has_raids": true,
-  "logical_height": 384,
-  "height": 384,
-  "min_y": -64,
-  "infiniburn": "#minecraft:infiniburn_overworld",
-  "effects": "minecraft:overworld"
-}
-```
-
-Omit `fixed_time` when the dimension should use the normal day/night cycle.
-Only include it when you want a fixed long tick value such as `6000`.
-
----
-
-## Custom Dimension
-
-### `data/<namespace>/dimension/my_dimension.json`
-```json
-{
-  "type": "<namespace>:my_type",
-  "generator": {
-    "type": "minecraft:noise",
-    "biome_source": {
-      "type": "minecraft:fixed",
-      "biome": "<namespace>:my_biome"
-    },
-    "settings": "minecraft:overworld"
-  }
-}
-```
-
-### Multi-biome dimension with `minecraft:multi_noise` source
-```json
-{
-  "type": "<namespace>:my_type",
-  "generator": {
-    "type": "minecraft:noise",
-    "biome_source": {
-      "type": "minecraft:multi_noise",
-      "biomes": [
-        {
-          "parameters": {
-            "temperature": [ -1.0, -0.45 ],
-            "humidity":    [ -1.0, -0.35 ],
-            "continentalness": [ -1.2, -1.05 ],
-            "erosion":     [ -0.78, 0.0 ],
-            "weirdness":   [ 0.0, 0.0 ],
-            "depth":       [ 0.0, 0.0 ],
-            "offset":      0.0
-          },
-          "biome": "<namespace>:my_biome"
-        }
-      ]
-    },
-    "settings": "minecraft:overworld"
-  }
-}
-```
-
----
-
-## NeoForge: Biome Modifier
-
-Biome Modifiers let you add features, spawns, or carvers to existing biomes without
-replacing the biome JSON.
-
-### JSON biome modifier (`data/<namespace>/neoforge/biome_modifier/add_ores.json`)
-```json
+~~~json
 {
   "type": "neoforge:add_features",
   "biomes": "#minecraft:is_overworld",
-  "features": "<namespace>:my_ore_placed",
+  "features": [
+    "mymod:my_ore"
+  ],
   "step": "underground_ores"
 }
-```
+~~~
 
-### Other NeoForge biome modifier types
-```json
-{ "type": "neoforge:add_spawns", "biomes": "#minecraft:is_forest",
-  "spawners": [{ "type": "minecraft:wolf", "weight": 5, "minCount": 2, "maxCount": 4 }] }
+The `features` and `structures` fields may be a single registry reference or
+an array. Structure tags use the `#namespace:path` form and live under
+`tags/worldgen/structure/`.
 
-{ "type": "neoforge:remove_features", "biomes": "#minecraft:is_plains",
-  "features": "minecraft:ore_coal_upper", "steps": ["underground_ores"] }
+## Jigsaw Structures
 
-{ "type": "neoforge:remove_spawns", "biomes": "#minecraft:is_ocean",
-  "entity_types": "#minecraft:skeletons" }
-```
+A jigsaw structure needs all of the following:
 
----
+- a `worldgen/structure` entry whose `start_pool` resolves;
+- a `worldgen/template_pool` entry;
+- each single pool element's `location` NBT under `structure/`;
+- each element's `processors` entry, or the known vanilla
+  `minecraft:empty` processor list;
+- a `worldgen/structure_set` or another placement mechanism.
 
-## Fabric: BiomeModification API (Code)
+Nested paths are part of the registry ID. For example,
+`worldgen/template_pool/village/start.json` is
+`namespace:village/start`.
 
-```java
-import net.fabricmc.fabric.api.biome.v1.BiomeModifications;
-import net.fabricmc.fabric.api.biome.v1.BiomeSelectors;
-import net.minecraft.world.level.levelgen.GenerationStep;
+## Validation
 
-public class MyModWorldgen {
-    public static void init() {
-        // Add a placed feature to all overworld biomes
-        BiomeModifications.addFeature(
-            BiomeSelectors.foundInOverworld(),
-            GenerationStep.Decoration.UNDERGROUND_ORES,
-            ResourceKey.create(
-                Registries.PLACED_FEATURE,
-                ResourceLocation.fromNamespaceAndPath(MyMod.MOD_ID, "my_ore_placed")
-            )
-        );
+Run the bundled structural validator against the directory that contains
+`data/`:
 
-        // Add mob spawns
-        BiomeModifications.addSpawn(
-            BiomeSelectors.tag(BiomeTags.IS_FOREST),
-            MobCategory.CREATURE,
-            EntityType.WOLF,
-            5, 2, 4
-        );
-    }
-}
-```
+~~~bash
+./scripts/validate-worldgen-json.sh --root src/main/resources
+./scripts/validate-worldgen-json.sh --root src/main/resources --strict
+~~~
 
----
+The validator checks:
 
-## Mod-Registered Worldgen (NeoForge + Fabric via Datagen)
+- JSON syntax in supported worldgen, dimension, tag, and biome-modifier paths;
+- singular NeoForge biome-modifier and worldgen-tag directory conventions;
+- local dimension, feature, structure, template-pool, processor-list, template,
+  and structure-tag references;
+- scalar and array biome-modifier feature and structure fields.
 
-### Register worldgen keys in code
-```java
-// In a dedicated worldgen registry class
-public class ModWorldgen {
-    public static final ResourceKey<Biome> MY_BIOME = ResourceKey.create(
-        Registries.BIOME,
-        ResourceLocation.fromNamespaceAndPath(MyMod.MOD_ID, "my_biome")
-    );
+It intentionally does not claim that arbitrary JSON matches the current 26.2
+codec. A successful run is structural preflight, not runtime proof.
 
-    public static final ResourceKey<PlacedFeature> MY_ORE_PLACED = ResourceKey.create(
-        Registries.PLACED_FEATURE,
-        ResourceLocation.fromNamespaceAndPath(MyMod.MOD_ID, "my_ore_placed")
-    );
-}
-```
+## Runtime Verification
 
-### Datagen: NeoForge (`DatapackBuiltinEntriesProvider`)
+1. Run the target project's data generation when providers own the files.
+2. Start a disposable 26.2 test world from the downstream project.
+3. Inspect `latest.log` for codec and registry errors.
+4. Locate or place the content with the target runtime's available commands.
+5. Generate new chunks; `/reload` does not regenerate existing terrain.
+6. Run NeoForge GameTests for deterministic block or structure behavior where
+   practical.
 
-```java
-public class ModWorldgenProvider extends DatapackBuiltinEntriesProvider {
-
-    private static final RegistrySetBuilder BUILDER = new RegistrySetBuilder()
-        .add(Registries.CONFIGURED_FEATURE, ModWorldgenProvider::bootstrapConfigured)
-        .add(Registries.PLACED_FEATURE, ModWorldgenProvider::bootstrapPlaced);
-
-    public ModWorldgenProvider(PackOutput output, CompletableFuture<HolderLookup.Provider> registries) {
-        super(output, registries, BUILDER, Set.of(MyMod.MOD_ID));
-    }
-
-    private static void bootstrapConfigured(BootstrapContext<ConfiguredFeature<?, ?>> ctx) {
-        ctx.register(
-            ModWorldgen.MY_ORE_CONFIGURED,
-            new ConfiguredFeature<>(Feature.ORE, new OreConfiguration(
-                OreConfiguration.target(
-                    new TagMatchTest(BlockTags.STONE_ORE_REPLACEABLES),
-                    ModBlocks.MY_ORE.get().defaultBlockState()
-                ),
-                9  // vein size
-            ))
-        );
-    }
-
-    private static void bootstrapPlaced(BootstrapContext<PlacedFeature> ctx) {
-        HolderGetter<ConfiguredFeature<?, ?>> configured =
-            ctx.lookup(Registries.CONFIGURED_FEATURE);
-        ctx.register(
-            ModWorldgen.MY_ORE_PLACED,
-            new PlacedFeature(
-                configured.getOrThrow(ModWorldgen.MY_ORE_CONFIGURED),
-                List.of(
-                    HeightRangePlacement.triangle(
-                        VerticalAnchor.absolute(-64),
-                        VerticalAnchor.absolute(32)
-                    ),
-                    CountPlacement.of(8),
-                    InSquarePlacement.spread(),
-                    BiomeFilter.biome()
-                )
-            )
-        );
-    }
-}
-```
-
-Register in your `GatherDataEvent` handler:
-```java
-@SubscribeEvent
-public static void onGatherData(GatherDataEvent event) {
-    DataGenerator gen = event.getGenerator();
-    PackOutput output = gen.getPackOutput();
-    gen.addProvider(event.includeServer(),
-        new ModWorldgenProvider(output, event.getLookupProvider()));
-}
-```
-
-### Datagen: Fabric (`FabricDynamicRegistryProvider`)
-
-```java
-public class ModWorldgenProvider extends FabricDynamicRegistryProvider {
-
-    public ModWorldgenProvider(FabricDataOutput output, CompletableFuture<HolderLookup.Provider> registries) {
-        super(output, registries);
-    }
-
-    @Override
-    protected void configure(HolderLookup.Provider registries, Entries entries) {
-        entries.addAll(registries.lookupOrThrow(Registries.CONFIGURED_FEATURE));
-        entries.addAll(registries.lookupOrThrow(Registries.PLACED_FEATURE));
-    }
-
-    @Override
-    public String getName() {
-        return "Worldgen";
-    }
-}
-```
-
----
-
-## Custom Structure
-
-### `data/<namespace>/worldgen/structure/my_structure.json`
-```json
-{
-  "type": "minecraft:jigsaw",
-  "biomes": "#<namespace>:my_biome_tag",
-  "step": "surface_structures",
-  "terrain_adaptation": "beard_thin",
-  "start_pool": "<namespace>:my_pool/start",
-  "size": 6,
-  "max_distance_from_center": 80,
-  "use_expansion_hack": false,
-  "spawn_overrides": {}
-}
-```
-
-### Template pool for jigsaw structures
-```json
-{
-  "fallback": "minecraft:empty",
-  "elements": [
-    {
-      "weight": 1,
-      "element": {
-        "element_type": "minecraft:single_pool_element",
-        "location": "<namespace>:my_structure/start",
-        "projection": "rigid",
-        "processors": "minecraft:empty"
-      }
-    }
-  ]
-}
-```
-
----
-
-## Structure Set
-
-### `data/<namespace>/worldgen/structure_set/my_structures.json`
-```json
-{
-  "structures": [
-    {
-      "structure": "<namespace>:my_structure",
-      "weight": 1
-    }
-  ],
-  "placement": {
-    "type": "minecraft:random_spread",
-    "spacing": 32,
-    "separation": 8,
-    "salt": 12345678
-  }
-}
-```
-
----
-
-## Development Workflow
-
-1. Create or edit worldgen JSON files in `data/<namespace>/worldgen/` (or equivalent mod resources path).
-2. Run the bundled validator to catch JSON and cross-reference errors before loading:
-   ```bash
-   ./scripts/validate-worldgen-json.sh --root /path/to/datapack-or-mod-resources
-   # Strict mode treats warnings as failures:
-   ./scripts/validate-worldgen-json.sh --root /path/to/datapack-or-mod-resources --strict
-   ```
-3. Fix any reported errors and re-validate until clean. The validator checks:
-   - JSON validity for `worldgen/**` and `neoforge/biome_modifier/**`
-   - Cross-reference integrity for `placed_feature -> configured_feature`
-   - Cross-reference integrity for `structure_set -> structure` and biome/biome_modifier feature targets
-   - Cross-reference integrity for `jigsaw structure -> start_pool` and `template_pool -> structure template / processor_list`
-4. For 1.21.11+ biome or dimension-type JSON, compare against the exact current
-   vanilla registry shape before in-game testing. Do not ship an older
-   `effects`/dimension-type shape just because the bundled structural validator
-   accepts the JSON and local references.
-5. In-game biome and structure testing:
-   ```mcfunction
-   /locate structure <namespace>:my_structure
-   /locate biome <namespace>:my_biome
-   /placefeature <namespace>:my_ore_placed
-   ```
-6. For dimension testing, use `/execute in` (dimension must exist at world load, not added via `/reload`):
-   ```mcfunction
-   execute in <namespace>:my_dimension run tp @s 0 100 0
-   ```
-7. Check `latest.log` for worldgen errors (missing biome references, malformed noise settings).
-8. Note: `/reload` refreshes datapack JSON but does **not** re-generate already-generated chunks. Test new worldgen in a fresh world or newly generated chunks. For existing test worlds, use a disposable copy and a purpose-built chunk reset/regeneration workflow; `/fill` only replaces blocks and is not a substitute for world generation.
-
----
+Do not run Minecraft or Gradle from this skills repository.
 
 ## References
 
-- Minecraft Wiki — World generation: https://minecraft.wiki/w/Custom_world_generation
-- Minecraft Wiki — Biome: https://minecraft.wiki/w/Biome/JSON_format
-- Minecraft Wiki — Features: https://minecraft.wiki/w/World_generation/Configured_feature
-- NeoForge Biome Modifiers: https://docs.neoforged.net/docs/worldgen/biomemodifier/
-- Fabric BiomeModifications: https://wiki.fabricmc.net/tutorial:biomemodification
-- misode's data pack generator (worldgen UI): https://misode.github.io/worldgen/
+- NeoForge worldgen documentation: https://docs.neoforged.net/docs/worldgen/
+- NeoForge biome modifiers: https://docs.neoforged.net/docs/worldgen/biomemodifier/
+- Minecraft Wiki world generation: https://minecraft.wiki/w/Custom_world_generation

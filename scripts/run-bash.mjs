@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-import fs from "node:fs";
 import { spawnSync } from "node:child_process";
+import os from "node:os";
 
 const bashArgs = process.argv.slice(2);
 if (bashArgs.length === 0) {
@@ -69,7 +69,15 @@ for (const candidate of candidates) {
     lastFailure = `${candidate}: ${result.error.message}`;
     continue;
   }
-  process.exit(result.status ?? 0);
+  if (result.status !== null) process.exit(result.status);
+  if (result.signal) {
+    const signalNumber = os.constants.signals[result.signal] ?? 1;
+    console.error(`[FAIL] Bash target terminated by ${result.signal}.`);
+    process.exit(Math.min(255, 128 + signalNumber));
+  }
+
+  console.error("[FAIL] Bash target ended without an exit status.");
+  process.exit(1);
 }
 
 console.error("[FAIL] Unable to locate a working bash executable.");

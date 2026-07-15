@@ -1,7 +1,0 @@
-{
-  "variants": {
-    "": {
-      "model": "mypack:item/test_item"
-    }
-  }
-}

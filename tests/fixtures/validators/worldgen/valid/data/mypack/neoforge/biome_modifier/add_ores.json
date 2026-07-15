@@ -1,6 +1,12 @@
 {
   "type": "neoforge:add_features",
   "biomes": "minecraft:is_overworld",
-  "features": "mypack:my_ore_placed",
+  "features": [
+    "mypack:my_ore_placed"
+  ],
+  "structures": [
+    "#mypack:all_structures",
+    "mypack:my_structure"
+  ],
   "step": "underground_ores"
 }

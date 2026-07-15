@@ -1,7 +1,7 @@
 {
   "structures": [
     {
-      "structure": "mypack:my_structure",
+      "structure": "#mypack:all_structures",
       "weight": 1
     }
   ],

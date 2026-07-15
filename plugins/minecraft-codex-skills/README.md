@@ -16,9 +16,8 @@ plugins/minecraft-codex-skills/
 
 ## Skill groups
 
-- Development: `minecraft-modding`, `minecraft-multiloader`, `minecraft-plugin-dev`, `minecraft-testing`, `minecraft-ci-release`
-- Content and assets: `minecraft-datapack`, `minecraft-commands-scripting`, `minecraft-world-generation`, `minecraft-resource-pack`, `minecraft-imagegen`
-- Operations: `minecraft-server-admin`, `minecraft-worldedit-ops`, `minecraft-essentials-ops`
+- Development: `minecraft-modding`, `minecraft-testing`, `minecraft-ci-release`
+- Content and assets: `minecraft-world-generation`, `minecraft-imagegen`
 
 ## Development model
 
@@ -32,8 +31,8 @@ plugins/minecraft-codex-skills/
 
 | Surface | Baseline |
 |---|---|
-| Minecraft scope | `1.21.x` across the bundled skills |
-| Java examples | Java `21` for Java-based Paper/mod snippets |
+| Minecraft scope | `26.2` across the bundled development skills |
+| Java examples | Java `25` for NeoForge snippets |
 | Codex install path | Local marketplace via `.agents/plugins/marketplace.json` |
 | Claude Code install path | `claude --plugin-dir ./plugins/minecraft-codex-skills` |
 | Image generation workflow | Requires a host with built-in image generation; Codex supports this directly through `minecraft-imagegen` |
@@ -63,7 +62,7 @@ claude --plugin-dir ./plugins/minecraft-codex-skills
 - If a local plugin edit does not appear in Codex, reinstall the plugin or restart Codex so it refreshes the cached local copy under `~/.codex/plugins/cache/`.
 - If `skills/` looks stale, sync from the canonical tree again before debugging manifests: `npm run sync:skills`.
 - If plugin validation fails, run `node ./scripts/validate-plugin-bundle.mjs` from the repo root to catch manifest or README drift.
-- On Windows, run the repo shell scripts from Git Bash or WSL so `bash`, `jq`, and `rsync` are available on `PATH`.
+- On Windows, run the repo shell scripts from Git Bash or WSL with `bash` and `jq` on `PATH`; mirror sync falls back to Node when `rsync` is unavailable.
 
 ## Manifest Notes
 

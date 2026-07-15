@@ -4,13 +4,24 @@ import path from "node:path";
 import yaml from "js-yaml";
 
 const ROOT = process.cwd();
-const TARGETS = [
+let targets = [
   path.join(ROOT, "README.md"),
   path.join(ROOT, "AGENTS.md"),
   path.join(ROOT, "docs"),
   path.join(ROOT, ".agents", "skills"),
   path.join(ROOT, "plugins"),
 ];
+
+const args = process.argv.slice(2);
+for (let index = 0; index < args.length; index += 1) {
+  if (args[index] === "--root" && args[index + 1]) {
+    targets = [path.resolve(args[index + 1])];
+    index += 1;
+    continue;
+  }
+  console.error("Usage: validate-doc-snippets.mjs [--root <path>]");
+  process.exit(2);
+}
 
 const errors = [];
 
@@ -43,8 +54,6 @@ function validateJson(file, blockIndex, code) {
     .filter(Boolean);
 
   for (const [partIndex, part] of parts.entries()) {
-    if (!/^[\[{]/.test(part)) continue;
-
     try {
       JSON.parse(part);
     } catch (error) {
@@ -62,16 +71,16 @@ function validateYaml(file, blockIndex, code) {
   }
 }
 
-for (const file of TARGETS.flatMap(walkMarkdownFiles)) {
+for (const file of targets.flatMap(walkMarkdownFiles)) {
   const text = fs.readFileSync(file, "utf8");
-  const fenceRe = /```([^\n]*)\n([\s\S]*?)```/g;
+  const fenceRe = /(```|~~~)([^\n]*)\n([\s\S]*?)\1/g;
   let match;
   let blockIndex = 0;
 
   while ((match = fenceRe.exec(text)) !== null) {
     blockIndex += 1;
-    const lang = match[1].trim().toLowerCase();
-    const code = match[2];
+    const lang = match[2].trim().split(/\s+/, 1)[0].toLowerCase();
+    const code = match[3];
 
     if (lang === "json") validateJson(rel(file), blockIndex, code);
     if (lang === "yaml" || lang === "yml") validateYaml(rel(file), blockIndex, code);

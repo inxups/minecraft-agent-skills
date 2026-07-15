@@ -1,7 +1,7 @@
-# NeoForge API Patterns (1.21.x)
+# NeoForge API Patterns
 
 Reference for NeoForge-specific code patterns. NeoForge is the primary Minecraft modding
-platform as of 2025-2026, targeting Minecraft 1.21.x with Java 21.
+platform as of 2025-2026, targeting Minecraft 26.2 with Java 25.
 
 ---
 
@@ -50,8 +50,8 @@ public class MyMod {
 
 ## neoforge.mods.toml (META-INF/neoforge.mods.toml)
 
-> File renamed from `mods.toml` to `neoforge.mods.toml` in NeoForge 1.20.5+.
-> Always use `neoforge.mods.toml` for 1.21.x projects.
+> File renamed from `mods.toml` to `neoforge.mods.toml` in NeoForge 26.2.
+> Always use `neoforge.mods.toml` for 26.2 projects.
 
 ```toml
 modLoader="javafml"

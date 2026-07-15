@@ -7,14 +7,31 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Added a dedicated Forge 1.20.1 / Java 17 lane to `minecraft-modding`, including ForgeGradle 6, `mods.toml`, `FMLJavaModLoadingContext`, `MinecraftForge.EVENT_BUS`, `RegistryObject`, networking, and legacy data-path guidance
+- Added regression fixtures for Bash 3.2, jq fallback behavior, Kotlin test roots,
+  non-literal GameTest templates, worldgen arrays and structure tags, external
+  registry references, invalid placed-feature JSON, Docker action digests,
+  malformed documentation JSON, and signal propagation.
 
 ### Changed
 
-- Corrected the modding registry cheat sheet to use current 1.21.x NeoForge/Fabric registry constants instead of stale `Registry.*` names
-- Replaced an invalid command-scripting `tellraw` translatable-text example with copyable raw JSON text components
-- Clarified that bundled worldgen biome and dimension JSON examples are structural guidance for 1.21.10-and-earlier shapes and require exact vanilla-registry verification before use on 1.21.11+ packs
-- Updated contributor and mirror documentation to prefer npm script entrypoints for sync/check workflows, keep public policy docs lean, and tighten security-reporting fallback wording around GitHub private vulnerability reporting
+- Focused the bundle on five independent skills: NeoForge 26.2 modding,
+  testing, CI/release, world generation, and Minecraft image generation.
+- Updated the maintained Minecraft baseline to 26.2 and Java 25, including the
+  current `26.2.0.15-beta` NeoForge artifact available at this release baseline.
+- Hardened repository and bundled validators around argument parsing, malformed
+  YAML/JSON, action pinning, mirror executable modes, plugin metadata, local
+  worldgen references, singular structure paths, and macOS Bash 3.2 behavior.
+- Pinned every GitHub Action in maintained examples to a verified full commit
+  SHA and required container actions to use SHA-256 image digests.
+- Reworked worldgen guidance to start from exact 26.2 runtime registry data
+  instead of presenting older biome and dimension schemas as copyable examples.
+
+### Removed
+
+- Removed the eight retired skill trees and their obsolete validator fixtures,
+  callers, mirror copies, plugin entries, and support scripts.
+- Removed stale Fabric, Forge 1.20.1, MockBukkit, Paper, and pre-26.2 routing
+  references from the maintained NeoForge skill paths.
 
 ## [2.5.1] - 2026-06-13
 

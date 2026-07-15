@@ -54,23 +54,62 @@ function parseFrontmatter(text, file) {
     return null;
   }
   const raw = match[1];
-  const name = raw.match(/^name:\s*(.+)$/m)?.[1]?.trim();
-  const hasDescription = /^description:\s*>?/m.test(raw);
+  const unquote = (value) => {
+    const trimmed = value?.trim() ?? "";
+    const quote = trimmed[0];
+    if ((quote === '"' || quote === "'") && trimmed.at(-1) === quote) {
+      return trimmed.slice(1, -1).trim();
+    }
+    return trimmed;
+  };
+  const name = unquote(raw.match(/^name:\s*(.+)$/m)?.[1]);
+  const descriptionRaw = raw.match(/^description:\s*(.*)$/m)?.[1]?.trim() ?? "";
+  const description = unquote(descriptionRaw);
+  const hasDescription = descriptionRaw === ">" || descriptionRaw === "|" || Boolean(description);
   if (!name) addError(file, "frontmatter missing `name`");
   if (!hasDescription) addError(file, "frontmatter missing `description`");
   return { name };
 }
 
-function checkRunnableBlocks(file, text) {
-  const chunks = text.split("```");
-  const runnableLangs = new Set(["bash", "sh", "mcfunction", "java", "json", "yaml", "yml", "toml", "properties"]);
+function skillDirectoryNames(dir) {
+  if (!fs.existsSync(dir)) return [];
+  return fs.readdirSync(dir, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
+    .sort();
+}
 
-  for (let i = 1; i < chunks.length; i += 2) {
-    const block = chunks[i];
-    const nl = block.indexOf("\n");
-    if (nl < 0) continue;
-    const lang = block.slice(0, nl).trim().toLowerCase();
-    const code = block.slice(nl + 1);
+function catalogSkillNames(text, file) {
+  const marker = "## Skill Catalog\n";
+  const start = text.indexOf(marker);
+  const remainder = start >= 0 ? text.slice(start + marker.length) : "";
+  const nextHeading = remainder.search(/^## /m);
+  const section = nextHeading >= 0 ? remainder.slice(0, nextHeading) : remainder;
+  const names = [...section.matchAll(/^\|\s*`(minecraft-[a-z0-9-]+)`\s*\|/gm)].map((match) => match[1]);
+  if (names.length === 0) addError(file, "Skill Catalog contains no skill rows");
+
+  const duplicates = names.filter((name, index) => names.indexOf(name) !== index);
+  for (const name of new Set(duplicates)) addError(file, `Skill Catalog lists \`${name}\` more than once`);
+  return [...new Set(names)].sort();
+}
+
+function compareNameSets(actual, documented, file) {
+  for (const name of actual.filter((entry) => !documented.includes(entry))) {
+    addError(file, `Skill Catalog is missing directory \`${name}\``);
+  }
+  for (const name of documented.filter((entry) => !actual.includes(entry))) {
+    addError(file, `Skill Catalog references missing directory \`${name}\``);
+  }
+}
+
+function checkRunnableBlocks(file, text) {
+  const runnableLangs = new Set(["bash", "sh", "mcfunction", "java", "json", "yaml", "yml", "toml", "properties"]);
+  const fenceRe = /(```|~~~)([^\n]*)\n([\s\S]*?)\1/g;
+  let match;
+
+  while ((match = fenceRe.exec(text)) !== null) {
+    const lang = match[2].trim().split(/\s+/, 1)[0].toLowerCase();
+    const code = match[3];
     if (!runnableLangs.has(lang)) continue;
 
     if (/\{player\}/.test(code)) {
@@ -88,9 +127,9 @@ function checkRunnableBlocks(file, text) {
 function checkPathConventions(file, text) {
   const relativeFile = rel(file);
   const legacyForge1201PathNeedles = [
-    ["loot_tables", "use `loot_table` for 1.21.x conventions"],
-    ["tags/blocks", "use `tags/block` for 1.21.x conventions"],
-    ["tags/items", "use `tags/item` for 1.21.x conventions"],
+    ["loot_tables", "use `loot_table` for 26.2 conventions"],
+    ["tags/blocks", "use `tags/block` for 26.2 conventions"],
+    ["tags/items", "use `tags/item` for 26.2 conventions"],
   ];
   const banned = [
     ["biome_modifiers", "use `biome_modifier` for NeoForge biome modifier path"],
@@ -99,15 +138,7 @@ function checkPathConventions(file, text) {
     ["1.21.1-2.0.0", "use `{mod_version}+{mc_version}` for mod version examples"],
   ];
 
-  const legacyForgeReference = file.endsWith("forge-1.20.1-api.md");
   const moddingSkill = relativeFile.endsWith("minecraft-modding/SKILL.md");
-
-  for (const line of text.split("\n")) {
-    const lineAllowsLegacyForge1201Paths = legacyForgeReference || (moddingSkill && line.includes("Forge 1.20.1"));
-    for (const [needle, msg] of legacyForge1201PathNeedles) {
-      if (line.includes(needle) && !lineAllowsLegacyForge1201Paths) addError(file, msg);
-    }
-  }
 
   for (const [needle, msg] of banned) {
     if (text.includes(needle)) addError(file, msg);
@@ -157,6 +188,11 @@ if (!fs.existsSync(CANONICAL)) {
     addError(rel(canonicalIndex), "required canonical skills index is missing");
   }
 
+  const canonicalSkillNames = skillDirectoryNames(CANONICAL);
+  if (fs.existsSync(canonicalIndex)) {
+    compareNameSets(canonicalSkillNames, catalogSkillNames(readText(canonicalIndex), rel(canonicalIndex)), rel(canonicalIndex));
+  }
+
   const skillDirs = fs.readdirSync(CANONICAL, { withFileTypes: true }).filter((d) => d.isDirectory());
   for (const dirent of skillDirs) {
     const skillName = dirent.name;
@@ -183,6 +219,7 @@ if (!fs.existsSync(CANONICAL)) {
   const canonicalFiles = walkFiles(CANONICAL);
   for (const file of canonicalFiles) {
     if (!file.endsWith(".md") && !file.endsWith(".sh")) continue;
+    if (file.endsWith(`${path.sep}SKILL.md`)) continue;
     const txt = readText(file);
     if (file.endsWith(".md")) {
       checkRunnableBlocks(rel(file), txt);

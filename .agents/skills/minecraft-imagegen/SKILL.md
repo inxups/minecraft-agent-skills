@@ -13,7 +13,7 @@ server brand asset.
 
 ### Routing Boundaries
 - `Use when`: the task is generating or editing a bitmap image for a Minecraft project, such as `pack.png`, release art, store thumbnails, concept textures, UI mockups, or server/banner art.
-- `Do not use when`: the task is deterministic resource-pack implementation work such as `pack.mcmeta`, block/item model JSON, blockstates, fonts, sounds, or shader files (`minecraft-resource-pack`).
+- `Do not use when`: the task is deterministic pack implementation such as `pack.mcmeta`, model JSON, blockstates, fonts, sounds, or shader files; edit those directly in the target project.
 - `Do not use when`: the task is vector/code-native UI, an existing SVG/logo system, or non-image code/assets.
 - `Do not use when`: the current host does not expose built-in image generation or an equivalent image-editing tool.
 
@@ -61,7 +61,7 @@ server brand asset.
 7. Structure the prompt as scene or backdrop -> subject -> important details -> constraints.
 8. Iterate with single targeted changes instead of rewriting the whole prompt every round.
 9. Save the chosen final into the workspace with a descriptive filename such as `pack-icon-v2.png` or `release-banner-hero.png`.
-10. If the asset will ship inside a resource pack, hand off final pack wiring to `minecraft-resource-pack`.
+10. If the asset will ship inside a resource pack, complete final sizing, tiling, and JSON wiring in the target project's actual pack layout.
 
 ---
 
@@ -139,7 +139,7 @@ For edits, explicitly say what must stay unchanged, for example: `change only th
 
 1. Generate a flat texture concept with neutral lighting and no perspective.
 2. Treat the result as look-dev, not an automatic ship-ready texture.
-3. Hand the approved concept to `minecraft-resource-pack` for final pack structure, sizing, tiling, and JSON wiring.
+3. Integrate the approved concept into the target pack's real structure, dimensions, tiling, and JSON wiring.
 
 ### UI or Server Brand Mockup
 

@@ -12,15 +12,15 @@ Target platforms:
 
 | Platform | MC Version | Java | Build System |
 |---|---|---|---|
-| **NeoForge** | 1.26.2 | Java 25 | Gradle + ModDevGradle |
+| **NeoForge** | 26.2 | Java 25 | Gradle + ModDevGradle |
 
 Always confirm the platform and Minecraft version from `gradle.properties` or `build.gradle`
 before writing any mod-specific code.
 
 ### Routing Boundaries
 - `Use when`: the task is Java/Kotlin mod code, registry/event work, networking, datagen wiring, and loader APIs.
-- `Do not use when`: the task is command-only vanilla logic (`minecraft-commands-scripting`) or pure datapacks (`minecraft-datapack`).
-- `Do not use when`: the task targets Paper/Bukkit plugins (`minecraft-plugin-dev`).
+- `Do not use when`: the task is exclusively worldgen data (`minecraft-world-generation`) or automated testing (`minecraft-testing`).
+- `Do not use when`: the task is release automation (`minecraft-ci-release`) or bitmap asset generation (`minecraft-imagegen`).
 
 ---
 
@@ -82,7 +82,7 @@ src/
         providers/
     resources/
       META-INF/
-        neoforge.mods.toml     ← mod metadata (renamed from mods.toml in NeoForge 1.20.5+)
+        neoforge.mods.toml     <- NeoForge mod metadata
       assets/<modid>/
         blockstates/           ← JSON blockstate definitions
         models/
@@ -94,12 +94,12 @@ src/
         lang/
           en_us.json           ← translation strings
       data/<modid>/
-        recipes/               ← crafting recipe JSON
+        recipe/                <- crafting recipe JSON
         loot_table/
           blocks/              ← per-block loot table JSON
         tags/
-          blocks/
-          items/
+          block/
+          item/
 ```
 
 ---
@@ -111,25 +111,25 @@ src/
 - **Physical server** – the dedicated server JAR (no rendering)
 - **Logical client** – the client thread (handles rendering, input)
 - **Logical server** – the server thread (handles world simulation)
-- Code decorated with `@OnlyIn(Dist.CLIENT)` (NeoForge)
-  must NEVER run on the server.
+- Keep rendering, screens, and input handlers in client-only event subscribers;
+  client classes must never load on a dedicated server.
 
 ### Registries
 Everything in Minecraft lives in a registry. Always register objects; never
 construct them at field initializer time outside a registry call. Use the
-mapping-appropriate registry constants for the loader you are editing:
+current NeoForge registry constants:
 
-| Type | NeoForge / Mojang mappings | Fabric / Yarn mappings |
-|------|-----------------------------|-------------------------|
-| Blocks | `BuiltInRegistries.BLOCK` | `Registries.BLOCK` |
-| Items | `BuiltInRegistries.ITEM` | `Registries.ITEM` |
-| Entity types | `BuiltInRegistries.ENTITY_TYPE` | `Registries.ENTITY_TYPE` |
-| Block entity types | `BuiltInRegistries.BLOCK_ENTITY_TYPE` | `Registries.BLOCK_ENTITY_TYPE` |
-| Menu / screen-handler types | `BuiltInRegistries.MENU` | `Registries.SCREEN_HANDLER` |
-| Sound events | `BuiltInRegistries.SOUND_EVENT` | `Registries.SOUND_EVENT` |
-| Biomes | `Registries.BIOME` registry keys | `RegistryKeys.BIOME` registry keys |
+| Type | Registry |
+|------|----------|
+| Blocks | `BuiltInRegistries.BLOCK` |
+| Items | `BuiltInRegistries.ITEM` |
+| Entity types | `BuiltInRegistries.ENTITY_TYPE` |
+| Block entity types | `BuiltInRegistries.BLOCK_ENTITY_TYPE` |
+| Menu types | `BuiltInRegistries.MENU` |
+| Sound events | `BuiltInRegistries.SOUND_EVENT` |
+| Biomes | `Registries.BIOME` registry keys |
 
-Do not copy older `Registry.BLOCK` / `Registry.ITEM` constants into 1.21.x code;
+Do not copy older `Registry.BLOCK` / `Registry.ITEM` constants into 26.2 code;
 those names are stale for the examples in this skill.
 
 ### ResourceLocation / Identifier
@@ -226,31 +226,31 @@ Run data generation with `./gradlew runData`, then commit the generated files.
 
 When adding a **new block**:
 - [ ] `Block` subclass (or use vanilla Block with properties)
-- [ ] Register in `ModBlocks.BLOCKS` / `Registries.BLOCK`
-- [ ] Register `BlockItem` in `ModItems.ITEMS` / `Registries.ITEM`
-- [ ] Blockstate JSON → `assets/<modid>/blockstates/<name>.json`
-- [ ] Block model JSON → `assets/<modid>/models/block/<name>.json`
-- [ ] Item model JSON → `assets/<modid>/models/item/<name>.json` (or inherits from block)
-- [ ] Texture PNG → `assets/<modid>/textures/block/<name>.png`
-- [ ] Loot table JSON -> 1.21.x: `data/<modid>/loot_table/blocks/<name>.json`
-- [ ] Tags -> 1.21.x: `data/<modid>/tags/block/` and `tags/item/`
+- [ ] Register in `ModBlocks.BLOCKS`
+- [ ] Register `BlockItem` in `ModItems.ITEMS`
+- [ ] Blockstate JSON -> `assets/<modid>/blockstates/<name>.json`
+- [ ] Block model JSON -> `assets/<modid>/models/block/<name>.json`
+- [ ] Item model JSON -> `assets/<modid>/models/item/<name>.json` (or inherits from block)
+- [ ] Texture PNG -> `assets/<modid>/textures/block/<name>.png`
+- [ ] Loot table JSON -> `data/<modid>/loot_table/blocks/<name>.json`
+- [ ] Tags -> `data/<modid>/tags/block/` and `tags/item/`
 - [ ] Language entry in `en_us.json`
 - [ ] Mine-with-correct-tool tag if hardness > 0
 
 When adding a **new item**:
 - [ ] `Item` subclass (or use `new Item(properties)`)
-- [ ] Register in `ModItems` / `Registries.ITEM`
+- [ ] Register in `ModItems`
 - [ ] Item model JSON
 - [ ] Texture PNG
 - [ ] Language entry
-- [ ] Creative tab registration (NeoForge/Forge: `BuildCreativeModeTabContentsEvent`;
+- [ ] Creative tab registration with `BuildCreativeModeTabContentsEvent`
 - [ ] Recipe JSON if craftable
 
 When adding a **new entity**:
 - [ ] Entity class (extends appropriate base: `Mob`, `Animal`, `TamableAnimal`, etc.)
 - [ ] `EntityType` registration
-- [ ] Renderer class (`@OnlyIn(Dist.CLIENT)`)
-- [ ] Model class (`@OnlyIn(Dist.CLIENT)`)
+- [ ] Client-only renderer class
+- [ ] Client-only model class
 - [ ] Register renderer in `EntityRenderersEvent.RegisterRenderers`
 - [ ] Spawn egg item (optional)
 - [ ] Spawn rules / biome modifier
@@ -259,8 +259,8 @@ When adding a **new entity**:
 
 ## 9. Open-Source Conventions
 
-- **License**: MIT  — include `LICENSE` file and `SPDX-License-Identifier` header
-- **Versioning**: `{mod_version}` (e.g., `0v`)
+- **License**: MIT - include a `LICENSE` file and an `SPDX-License-Identifier` header
+- **Versioning**: semantic mod version plus the Minecraft target where useful (for example, `1.0.0+26.2`)
 - **Changelog**: Keep `CHANGELOG.md` up to date with semver notes
 - **Publishing**: Use `gradle-modrinth` or `curseforgegradle` plugins for CurseForge / Modrinth
 - **CI**: GitHub Actions with `./gradlew build` and `./gradlew runGameTestServer`

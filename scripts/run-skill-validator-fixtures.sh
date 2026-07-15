@@ -111,48 +111,6 @@ expect_temp_skill_pass() {
 
 echo "=== Running Skill Validator Fixtures ==="
 
-expect_path "tests/fixtures/validators/datapack/valid"
-expect_path "tests/fixtures/validators/datapack/legacy-pack-metadata"
-expect_path "tests/fixtures/validators/datapack/legacy-function-paths"
-expect_path "tests/fixtures/validators/datapack/invalid"
-expect_path "tests/fixtures/validators/datapack/invalid-pack-version"
-expect_pass "datapack valid" \
-  ./.agents/skills/minecraft-datapack/scripts/validate-datapack.sh \
-  --root tests/fixtures/validators/datapack/valid
-expect_pass "datapack legacy pack metadata" \
-  ./.agents/skills/minecraft-datapack/scripts/validate-datapack.sh \
-  --root tests/fixtures/validators/datapack/legacy-pack-metadata
-expect_fail_contains "datapack legacy function paths" "legacy path detected" \
-  ./.agents/skills/minecraft-datapack/scripts/validate-datapack.sh \
-  --root tests/fixtures/validators/datapack/legacy-function-paths
-expect_fail_contains "datapack invalid" "legacy path detected" \
-  ./.agents/skills/minecraft-datapack/scripts/validate-datapack.sh \
-  --root tests/fixtures/validators/datapack/invalid
-expect_fail_contains "datapack invalid pack version" "pack.mcmeta must define" \
-  ./.agents/skills/minecraft-datapack/scripts/validate-datapack.sh \
-  --root tests/fixtures/validators/datapack/invalid-pack-version
-
-expect_path "tests/fixtures/validators/resource-pack/valid"
-expect_path "tests/fixtures/validators/resource-pack/legacy-pack-metadata"
-expect_path "tests/fixtures/validators/resource-pack/invalid"
-expect_path "tests/fixtures/validators/resource-pack/invalid-pack-version"
-expect_path "tests/fixtures/validators/resource-pack/invalid-item-model"
-expect_pass "resource-pack valid" \
-  ./.agents/skills/minecraft-resource-pack/scripts/validate-resource-pack.sh \
-  --root tests/fixtures/validators/resource-pack/valid
-expect_pass "resource-pack legacy pack metadata" \
-  ./.agents/skills/minecraft-resource-pack/scripts/validate-resource-pack.sh \
-  --root tests/fixtures/validators/resource-pack/legacy-pack-metadata
-expect_fail_contains "resource-pack invalid" "missing texture" \
-  ./.agents/skills/minecraft-resource-pack/scripts/validate-resource-pack.sh \
-  --root tests/fixtures/validators/resource-pack/invalid
-expect_fail_contains "resource-pack invalid pack version" "pack.mcmeta must define" \
-  ./.agents/skills/minecraft-resource-pack/scripts/validate-resource-pack.sh \
-  --root tests/fixtures/validators/resource-pack/invalid-pack-version
-expect_fail_contains "resource-pack invalid item model" "missing model" \
-  ./.agents/skills/minecraft-resource-pack/scripts/validate-resource-pack.sh \
-  --root tests/fixtures/validators/resource-pack/invalid-item-model
-
 expect_path "tests/fixtures/validators/ci-release/valid/SKILL.md"
 expect_path "tests/fixtures/validators/ci-release/invalid/SKILL.md"
 expect_path "tests/fixtures/validators/ci-release/invalid-yaml/SKILL.md"
@@ -167,6 +125,9 @@ expect_pass "ci-release multiline flow yaml" \
   ./.agents/skills/minecraft-ci-release/scripts/validate-workflow-snippets.sh \
   --root tests/fixtures/validators/ci-release/multiline-flow
 expect_fail_contains "ci-release invalid" 'missing top-level `jobs:`' \
+  ./.agents/skills/minecraft-ci-release/scripts/validate-workflow-snippets.sh \
+  --root tests/fixtures/validators/ci-release/invalid
+expect_fail_contains "ci-release unpinned action" 'action must be pinned to a full commit SHA' \
   ./.agents/skills/minecraft-ci-release/scripts/validate-workflow-snippets.sh \
   --root tests/fixtures/validators/ci-release/invalid
 expect_fail_contains "ci-release invalid yaml" "is not valid YAML" \
@@ -185,44 +146,9 @@ expect_fail_contains "ci-release strict warnings" "strict mode failed" \
 expect_temp_skill_pass "ci-release standalone installed mirror" \
   ./.codex/skills/minecraft-ci-release
 
-expect_path "tests/fixtures/validators/plugin-dev/valid"
-expect_path "tests/fixtures/validators/plugin-dev/valid-paper-plugin"
-expect_path "tests/fixtures/validators/plugin-dev/valid-strict-reload-subcommand"
-expect_path "tests/fixtures/validators/plugin-dev/valid-newer-api-version"
-expect_path "tests/fixtures/validators/plugin-dev/invalid"
-expect_path "tests/fixtures/validators/plugin-dev/invalid-api-version"
-expect_path "tests/fixtures/validators/plugin-dev/invalid-api-version-zero-patch"
-expect_path "tests/fixtures/validators/plugin-dev/invalid-paper-plugin"
-expect_path "tests/fixtures/validators/plugin-dev/invalid-reload-misuse"
-expect_pass "plugin-dev valid" \
-  ./.agents/skills/minecraft-plugin-dev/scripts/validate-plugin-layout.sh \
-  --root tests/fixtures/validators/plugin-dev/valid
-expect_pass "plugin-dev valid paper-plugin.yml" \
-  ./.agents/skills/minecraft-plugin-dev/scripts/validate-plugin-layout.sh \
-  --root tests/fixtures/validators/plugin-dev/valid-paper-plugin
-expect_pass "plugin-dev valid strict reload subcommand" \
-  ./.agents/skills/minecraft-plugin-dev/scripts/validate-plugin-layout.sh \
-  --root tests/fixtures/validators/plugin-dev/valid-strict-reload-subcommand \
-  --strict
-expect_pass_contains "plugin-dev valid newer api-version warns" "newer than the repo's documented Paper example patch" \
-  ./.agents/skills/minecraft-plugin-dev/scripts/validate-plugin-layout.sh \
-  --root tests/fixtures/validators/plugin-dev/valid-newer-api-version
-expect_fail_contains "plugin-dev invalid" "api-version has invalid format" \
-  ./.agents/skills/minecraft-plugin-dev/scripts/validate-plugin-layout.sh \
-  --root tests/fixtures/validators/plugin-dev/invalid
-expect_fail_contains "plugin-dev invalid api-version range" "api-version is outside the documented 1.21.x skill scope" \
-  ./.agents/skills/minecraft-plugin-dev/scripts/validate-plugin-layout.sh \
-  --root tests/fixtures/validators/plugin-dev/invalid-api-version
-expect_fail_contains "plugin-dev invalid api-version zero patch" "patch must be a positive integer without leading zeroes" \
-  ./.agents/skills/minecraft-plugin-dev/scripts/validate-plugin-layout.sh \
-  --root tests/fixtures/validators/plugin-dev/invalid-api-version-zero-patch
-expect_fail_contains "plugin-dev invalid paper-plugin.yml" "paper-plugin.yml missing key: api-version" \
-  ./.agents/skills/minecraft-plugin-dev/scripts/validate-plugin-layout.sh \
-  --root tests/fixtures/validators/plugin-dev/invalid-paper-plugin
-expect_fail_contains "plugin-dev invalid reload misuse strict" "strict mode failed" \
-  ./.agents/skills/minecraft-plugin-dev/scripts/validate-plugin-layout.sh \
-  --root tests/fixtures/validators/plugin-dev/invalid-reload-misuse \
-  --strict
+expect_fail_contains "imagegen scaffold missing --type value" "--type requires a value" \
+  bash ./.agents/skills/minecraft-imagegen/scripts/scaffold-asset-brief.sh \
+  --type
 
 imagegen_workspace="$(mktemp -d)"
 imagegen_install_root="$(mktemp -d)"
@@ -231,18 +157,18 @@ mkdir -p "$imagegen_skill_dir"
 cp -R ./.agents/skills/minecraft-imagegen/. "$imagegen_skill_dir"
 if (
   cd "$imagegen_skill_dir"
-  OLDPWD="$imagegen_workspace" bash ./scripts/scaffold-asset-brief.sh --type pack-icon --name smoke-test
+  CODEX_WORKSPACE_ROOT="$imagegen_workspace" bash ./scripts/scaffold-asset-brief.sh --type pack-icon --name smoke-test
 ); then
   if [[ -f "$imagegen_workspace/smoke-test-asset-brief.md" ]]; then
-    echo "$PASS imagegen scaffold workspace inference"
+    echo "$PASS imagegen scaffold explicit workspace"
   else
-    echo "$FAIL imagegen scaffold workspace inference (brief missing from inferred workspace)" >&2
+    echo "$FAIL imagegen scaffold explicit workspace (brief missing from configured workspace)" >&2
     rm -rf "$imagegen_workspace" "$imagegen_install_root"
     exit 1
   fi
 else
   rm -rf "$imagegen_workspace" "$imagegen_install_root"
-  echo "$FAIL imagegen scaffold workspace inference (expected pass)" >&2
+  echo "$FAIL imagegen scaffold explicit workspace (expected pass)" >&2
   exit 1
 fi
 rm -rf "$imagegen_workspace" "$imagegen_install_root"
@@ -254,7 +180,7 @@ mkdir -p "$imagegen_skill_dir"
 cp -R ./.agents/skills/minecraft-imagegen/. "$imagegen_skill_dir"
 if (
   cd "$imagegen_skill_dir"
-  OLDPWD="$imagegen_workspace" bash ./scripts/scaffold-asset-brief.sh --type release-banner --name relative-out --out docs/briefs
+  CODEX_WORKSPACE_ROOT="$imagegen_workspace" bash ./scripts/scaffold-asset-brief.sh --type release-banner --name relative-out --out docs/briefs
 ); then
   if [[ -f "$imagegen_workspace/docs/briefs/relative-out-asset-brief.md" ]]; then
     if [[ -f "$imagegen_skill_dir/docs/briefs/relative-out-asset-brief.md" ]]; then
@@ -331,19 +257,12 @@ else
   exit 1
 fi
 
-expect_path "tests/fixtures/validators/testing/valid"
-expect_path "tests/fixtures/validators/testing/invalid"
 expect_path "tests/fixtures/validators/testing/neoforge-valid"
 expect_path "tests/fixtures/validators/testing/neoforge-missing-template"
 expect_path "tests/fixtures/validators/testing/neoforge-missing-registration"
-expect_path "tests/fixtures/validators/testing/fabric-valid"
-expect_path "tests/fixtures/validators/testing/fabric-missing-entrypoint"
-expect_pass "testing valid" \
-  ./.agents/skills/minecraft-testing/scripts/validate-test-layout.sh \
-  --root tests/fixtures/validators/testing/valid
-expect_fail_contains "testing invalid" "MockBukkit tests detected but build file is missing MockBukkit dependency" \
-  ./.agents/skills/minecraft-testing/scripts/validate-test-layout.sh \
-  --root tests/fixtures/validators/testing/invalid
+expect_path "tests/fixtures/validators/testing/neoforge-nonliteral-template"
+expect_path "tests/fixtures/validators/testing/kotlin-valid"
+expect_path "tests/fixtures/validators/testing/missing-source-root"
 expect_pass "testing neoforge valid" \
   ./.agents/skills/minecraft-testing/scripts/validate-test-layout.sh \
   --root tests/fixtures/validators/testing/neoforge-valid
@@ -353,25 +272,15 @@ expect_fail_contains "testing neoforge missing template" "GameTest template fixt
 expect_fail_contains "testing neoforge missing registration" "NeoForge GameTest class is not registered on an event bus" \
   ./.agents/skills/minecraft-testing/scripts/validate-test-layout.sh \
   --root tests/fixtures/validators/testing/neoforge-missing-registration
-expect_pass "testing fabric valid" \
+expect_pass_contains "testing neoforge nonliteral template" "GameTest template is non-literal and cannot be matched statically" \
   ./.agents/skills/minecraft-testing/scripts/validate-test-layout.sh \
-  --root tests/fixtures/validators/testing/fabric-valid
-expect_fail_contains "testing fabric missing entrypoint" "fabric.mod.json is missing the fabric-gametest entry for com.example.mymod.fabric.MyFabricGameTests" \
+  --root tests/fixtures/validators/testing/neoforge-nonliteral-template
+expect_pass "testing Kotlin source root" \
   ./.agents/skills/minecraft-testing/scripts/validate-test-layout.sh \
-  --root tests/fixtures/validators/testing/fabric-missing-entrypoint
-
-expect_path "tests/fixtures/validators/multiloader/valid"
-expect_path "tests/fixtures/validators/multiloader/invalid"
-expect_path "tests/fixtures/validators/multiloader/invalid-missing-mod-version"
-expect_pass "multiloader valid" \
-  ./.agents/skills/minecraft-multiloader/scripts/check-version-sanity.sh \
-  --root tests/fixtures/validators/multiloader/valid
-expect_fail_contains "multiloader invalid" "enabled_platforms must include fabric and neoforge" \
-  ./.agents/skills/minecraft-multiloader/scripts/check-version-sanity.sh \
-  --root tests/fixtures/validators/multiloader/invalid
-expect_fail_contains "multiloader invalid missing mod_version" "gradle.properties missing key: mod_version" \
-  ./.agents/skills/minecraft-multiloader/scripts/check-version-sanity.sh \
-  --root tests/fixtures/validators/multiloader/invalid-missing-mod-version
+  --root tests/fixtures/validators/testing/kotlin-valid
+expect_fail_contains "testing missing source root" "missing src/test/java or src/test/kotlin" \
+  ./.agents/skills/minecraft-testing/scripts/validate-test-layout.sh \
+  --root tests/fixtures/validators/testing/missing-source-root
 
 expect_path "tests/fixtures/validators/worldgen/valid"
 expect_path "tests/fixtures/validators/worldgen/invalid"
@@ -388,9 +297,19 @@ expect_path "tests/fixtures/validators/worldgen/nested-paths"
 expect_path "tests/fixtures/validators/worldgen/invalid-tags"
 expect_path "tests/fixtures/validators/worldgen/tags-only"
 expect_path "tests/fixtures/validators/worldgen/invalid-jigsaw-refs"
+expect_path "tests/fixtures/validators/worldgen/external-feature-refs"
+expect_path "tests/fixtures/validators/worldgen/invalid-placed-json"
 expect_pass "worldgen valid" \
   ./.agents/skills/minecraft-world-generation/scripts/validate-worldgen-json.sh \
   --root tests/fixtures/validators/worldgen/valid
+expect_pass "worldgen jq fallback" \
+  env WORLDGEN_FORCE_JQ_SHIM=1 \
+  ./.agents/skills/minecraft-world-generation/scripts/validate-worldgen-json.sh \
+  --root tests/fixtures/validators/worldgen/valid
+expect_pass "worldgen external feature refs strict" \
+  ./.agents/skills/minecraft-world-generation/scripts/validate-worldgen-json.sh \
+  --root tests/fixtures/validators/worldgen/external-feature-refs \
+  --strict
 expect_fail_contains "worldgen invalid" "placed_feature references missing configured_feature" \
   ./.agents/skills/minecraft-world-generation/scripts/validate-worldgen-json.sh \
   --root tests/fixtures/validators/worldgen/invalid
@@ -424,6 +343,9 @@ expect_fail_contains "worldgen invalid external local dimension refs noise" "dim
 expect_fail_contains "worldgen invalid dimension json summary" "worldgen validation failed" \
   ./.agents/skills/minecraft-world-generation/scripts/validate-worldgen-json.sh \
   --root tests/fixtures/validators/worldgen/invalid-dimension-json
+expect_fail_contains "worldgen invalid placed feature JSON" "invalid JSON" \
+  ./.agents/skills/minecraft-world-generation/scripts/validate-worldgen-json.sh \
+  --root tests/fixtures/validators/worldgen/invalid-placed-json
 expect_pass "worldgen nested paths" \
   ./.agents/skills/minecraft-world-generation/scripts/validate-worldgen-json.sh \
   --root tests/fixtures/validators/worldgen/nested-paths

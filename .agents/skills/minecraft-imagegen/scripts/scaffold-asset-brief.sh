@@ -30,14 +30,26 @@ fi
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --type)
+      if [[ $# -lt 2 || -z "${2:-}" ]]; then
+        echo "--type requires a value" >&2
+        exit 2
+      fi
       TYPE="${2:-}"
       shift 2
       ;;
     --name)
+      if [[ $# -lt 2 || -z "${2:-}" ]]; then
+        echo "--name requires a value" >&2
+        exit 2
+      fi
       NAME="${2:-}"
       shift 2
       ;;
     --out)
+      if [[ $# -lt 2 || -z "${2:-}" ]]; then
+        echo "--out requires a directory" >&2
+        exit 2
+      fi
       OUT_DIR="${2:-}"
       shift 2
       ;;
@@ -59,7 +71,6 @@ done
 
 infer_workspace_dir() {
   local cwd
-  local oldpwd
   local candidate=""
 
   if [[ -n "${CODEX_WORKSPACE_ROOT:-}" && -d "${CODEX_WORKSPACE_ROOT:-}" ]]; then
@@ -71,14 +82,6 @@ infer_workspace_dir() {
   if [[ "$cwd" != "$SKILL_DIR" && "$cwd" != "$SCRIPT_DIR" && "$cwd" != "$SKILL_DIR/"* ]]; then
     printf '%s\n' "$cwd"
     return 0
-  fi
-
-  if [[ -n "${OLDPWD:-}" && -d "${OLDPWD:-}" ]]; then
-    oldpwd="$(CDPATH= cd -- "$OLDPWD" && pwd -P)"
-    if [[ "$oldpwd" != "$SKILL_DIR" && "$oldpwd" != "$SCRIPT_DIR" && "$oldpwd" != "$SKILL_DIR/"* ]]; then
-      printf '%s\n' "$oldpwd"
-      return 0
-    fi
   fi
 
   case "$SKILL_DIR" in

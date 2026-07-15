@@ -1,7 +1,7 @@
 {
   "name": "minecraft-codex-skills",
   "version": "2.5.1",
-  "description": "A dual-target Minecraft development skills bundle for Codex and Claude Code, with built-in image-generation workflows on Codex.",
+  "description": "Five Minecraft 26.2 development skills for Codex and Claude Code, with built-in image-generation workflows on Codex.",
   "author": {
     "name": "Jahrome907",
     "url": "https://github.com/Jahrome907"
@@ -15,16 +15,15 @@
     "codex",
     "claude",
     "neoforge",
-    "fabric",
-    "paper",
-    "resource-pack",
+    "testing",
+    "world-generation",
     "image-generation"
   ],
   "skills": "./skills/",
   "interface": {
     "displayName": "Minecraft Codex Skills",
-    "shortDescription": "13 reusable Minecraft development and operations skills, plus built-in image-generation workflows on Codex.",
-    "longDescription": "Bundle modding, plugin-dev, datapack, commands, testing, CI/CD, world generation, resource pack, server admin, WorldEdit ops, and EssentialsX ops skills in one installable package, with built-in image-generation workflows when running on Codex.",
+    "shortDescription": "5 reusable Minecraft 26.2 development skills with image-generation workflows on Codex.",
+    "longDescription": "Bundle minecraft-modding, minecraft-testing, minecraft-ci-release, minecraft-world-generation, and minecraft-imagegen in one installable package, with built-in image-generation workflows when running on Codex.",
     "developerName": "Jahrome907",
     "category": "Productivity",
     "capabilities": [
@@ -35,8 +34,8 @@
     "privacyPolicyURL": "https://github.com/Jahrome907/minecraft-agent-skills/blob/main/PRIVACY.md",
     "termsOfServiceURL": "https://github.com/Jahrome907/minecraft-agent-skills/blob/main/TERMS.md",
     "defaultPrompt": [
-      "Use Minecraft Codex Skills to scaffold a NeoForge 1.21.11 mod with data generation.",
-      "Use Minecraft Codex Skills to generate pack art or concept textures for a resource-pack update."
+      "Use Minecraft Codex Skills to scaffold a NeoForge 26.2 mod with data generation.",
+      "Use Minecraft Codex Skills to generate pack art or concept textures for a Minecraft project."
     ],
     "brandColor": "#5a8f2c"
   }

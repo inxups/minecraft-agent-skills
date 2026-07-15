@@ -51,5 +51,14 @@ expect_fail_contains "workflow pins invalid missing ref" "action reference is mi
 expect_fail_contains "workflow pins invalid" "action must be pinned to a full commit SHA" \
   node ./scripts/check-workflow-action-pins.mjs \
   --root tests/fixtures/workflow-pins/invalid
+expect_fail_contains "workflow pins invalid container digest" "container action must be pinned to a sha256 digest" \
+  node ./scripts/check-workflow-action-pins.mjs \
+  --root tests/fixtures/workflow-pins/invalid
+expect_fail_contains "documentation invalid scalar JSON" "json block #1 is invalid" \
+  node ./scripts/validate-doc-snippets.mjs \
+  --root tests/fixtures/docs/invalid-scalar.md
+expect_fail_contains "run-bash signal propagation" "Bash target terminated by SIGTERM" \
+  node ./scripts/run-bash.mjs \
+  tests/fixtures/run-bash/signal.sh
 
 echo "$PASS repo policy fixture checks completed"

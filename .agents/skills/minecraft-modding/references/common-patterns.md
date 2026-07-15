@@ -1,7 +1,8 @@
 # Common Minecraft Modding Patterns
 
-Cross-platform patterns for blocks, items, entities, data generation, commands, recipes,
-and more. Code examples use NeoForge syntax unless noted; adapt field/method names for Fabric.
+NeoForge 26.2 patterns for blocks, items, entities, data generation, commands,
+recipes, and related resources. Verify APIs against the downstream project's
+resolved NeoForge version before applying examples unchanged.
 
 ---
 
@@ -202,7 +203,7 @@ public static final DeferredItem<SwordItem> MY_SWORD =
 ### Armor Set
 
 ```java
-// Define armor material as a static constant (NeoForge 1.21):
+// Define armor material as a static constant (NeoForge 26.2):
 public static final ResourceKey<ArmorMaterial> MY_MATERIAL_KEY =
     ResourceKey.create(Registries.ARMOR_MATERIAL,
         ResourceLocation.fromNamespaceAndPath(MyMod.MOD_ID, "my_material"));
@@ -260,7 +261,7 @@ public static void registerEntityAttributes(EntityAttributeCreationEvent event) 
 
 ---
 
-## Commands (Brigadier — works the same in NeoForge and Fabric)
+## Commands (Brigadier)
 
 ```java
 // NeoForge — register on GAME bus
@@ -305,7 +306,7 @@ private static int executeGive(CommandContext<CommandSourceStack> ctx,
 ### Shaped Crafting Recipe
 
 ```json
-// data/mymod/recipes/my_item.json
+// data/mymod/recipe/my_item.json
 {
   "type": "minecraft:crafting_shaped",
   "pattern": [
@@ -352,7 +353,7 @@ private static int executeGive(CommandContext<CommandSourceStack> ctx,
 }
 ```
 
-### Custom Recipe Type (NeoForge / Fabric)
+### Custom Recipe Type
 
 ```java
 // Implement Recipe<RecipeInput> and register RecipeSerializer + RecipeType
@@ -530,20 +531,19 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4
         with:
-          java-version: '21'
+          java-version: '25'
           distribution: 'microsoft'
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@0b6dd653ba04f4f93bf581ec31e66cbd7dcb644d # v4
       - name: Build with Gradle
         run: ./gradlew build
       - name: Run Game Tests
         run: ./gradlew runGameTestServer
-        # For Fabric: ./gradlew runGametest
       - name: Upload Build Artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: mod-jar
           path: build/libs/*.jar
@@ -562,7 +562,7 @@ modrinth {
     versionNumber = project.mod_version
     versionType = "release"
     uploadFile = jar
-    gameVersions = ["1.21.11"]
+    gameVersions = ["26.2"]
     loaders = ["neoforge"]
     changelog = rootProject.file("CHANGELOG.md").text
     syncBodyFrom = rootProject.file("README.md").text
@@ -578,7 +578,7 @@ curseforge {
         changelogType = "markdown"
         changelog = file("CHANGELOG.md")
         releaseType = "release"
-        addGameVersion "1.21.11"
+        addGameVersion "26.2"
         addGameVersion "NeoForge"
         mainArtifact jar
     }

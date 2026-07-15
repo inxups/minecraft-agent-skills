@@ -11,6 +11,10 @@ STRICT=0
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --root)
+      if [[ $# -lt 2 || -z "${2:-}" ]]; then
+        echo "$FAIL --root requires a path" >&2
+        exit 2
+      fi
       ROOT="${2:-}"
       shift 2
       ;;
@@ -22,13 +26,12 @@ while [[ $# -gt 0 ]]; do
       cat <<'USAGE'
 Usage: validate-test-layout.sh [--root <path>] [--strict]
 
-Checks common 1.21.x testing layout expectations:
+Checks common 26.2 testing layout expectations:
 - build.gradle(.kts) exists
 - src/test/java or src/test/kotlin exists
 - test task enables JUnit Platform
-- MockBukkit tests have the MockBukkit dependency
 - GameTests have committed structure fixtures that match referenced templates
-- NeoForge/Fabric GameTests include their required registration metadata
+- NeoForge GameTests include their required registration metadata
 USAGE
       exit 0
       ;;
@@ -96,7 +99,7 @@ template_fixture_exists() {
     return 1
   fi
 
-  local structure_rel="data/$namespace/structures/$path.nbt"
+  local structure_rel="data/$namespace/structure/$path.nbt"
   local structure_root
   for structure_root in "${structure_roots[@]}"; do
     if [[ -f "$structure_root/$structure_rel" ]]; then
@@ -116,12 +119,14 @@ else
   fail "missing build.gradle or build.gradle.kts"
 fi
 
-TEST_ROOT=''
+declare -a TEST_SOURCE_ROOTS=()
 if [[ -d "$ROOT/src/test/java" ]]; then
-  TEST_ROOT="$ROOT/src/test/java"
-elif [[ -d "$ROOT/src/test/kotlin" ]]; then
-  TEST_ROOT="$ROOT/src/test/kotlin"
-else
+  TEST_SOURCE_ROOTS+=("$ROOT/src/test/java")
+fi
+if [[ -d "$ROOT/src/test/kotlin" ]]; then
+  TEST_SOURCE_ROOTS+=("$ROOT/src/test/kotlin")
+fi
+if [[ "${#TEST_SOURCE_ROOTS[@]}" -eq 0 ]]; then
   fail "missing src/test/java or src/test/kotlin"
 fi
 
@@ -129,8 +134,10 @@ if [[ -n "$BUILD_FILE" ]]; then
   pass "found build file: ${BUILD_FILE#$ROOT/}"
 fi
 
-if [[ -n "$TEST_ROOT" ]]; then
-  pass "found test source root: ${TEST_ROOT#$ROOT/}"
+if [[ "${#TEST_SOURCE_ROOTS[@]}" -gt 0 ]]; then
+  for test_root in "${TEST_SOURCE_ROOTS[@]}"; do
+    pass "found test source root: ${test_root#$ROOT/}"
+  done
 fi
 
 if [[ -n "$BUILD_FILE" ]]; then
@@ -138,24 +145,6 @@ if [[ -n "$BUILD_FILE" ]]; then
     pass "test task enables JUnit Platform"
   else
     fail "test task missing useJUnitPlatform()"
-  fi
-fi
-
-HAS_MOCKBUKKIT_TESTS=0
-if [[ -n "$TEST_ROOT" ]] && grep -R -E -q 'MockBukkit|ServerMock|PlayerMock' "$TEST_ROOT"; then
-  HAS_MOCKBUKKIT_TESTS=1
-  pass "MockBukkit-style tests detected"
-fi
-
-if [[ "$HAS_MOCKBUKKIT_TESTS" -eq 1 && -n "$BUILD_FILE" ]]; then
-  if grep -R -E -q 'be\.seeseemelk|com\.github\.seeseemelk' "$BUILD_FILE" "$TEST_ROOT"; then
-    warn "legacy MockBukkit 3.x coordinate or package detected; prefer org.mockbukkit.mockbukkit 4.x"
-  fi
-
-  if grep -Eiq 'MockBukkit|mockbukkit' "$BUILD_FILE"; then
-    pass "build file declares MockBukkit dependency"
-  else
-    fail "MockBukkit tests detected but build file is missing MockBukkit dependency"
   fi
 fi
 
@@ -174,25 +163,28 @@ done
 declare -a GAME_TEST_FILES=()
 declare -a GAME_TEST_TEMPLATES=()
 declare -a NEOFORGE_GAMETEST_CLASSES=()
-declare -a FABRIC_GAMETEST_CLASSES=()
+declare -a NON_LITERAL_TEMPLATE_FILES=()
 
 if [[ "${#SOURCE_SCAN_ROOTS[@]}" -gt 0 ]]; then
   while IFS= read -r -d '' source_file; do
-    if grep -E -q '@GameTest|FabricGameTest|GameTestHelper' "$source_file"; then
+    if grep -E -q '@GameTest|GameTestHelper' "$source_file"; then
       GAME_TEST_FILES+=("$source_file")
       fqcn="$(extract_fqcn "$source_file" || true)"
       if [[ -n "$fqcn" ]]; then
         if grep -E -q 'net\.neoforged|@GameTestHolder|PrefixGameTestTemplate' "$source_file"; then
           NEOFORGE_GAMETEST_CLASSES+=("$fqcn")
         fi
-        if grep -E -q 'FabricGameTest|fabric\.api\.gametest' "$source_file"; then
-          FABRIC_GAMETEST_CLASSES+=("$fqcn")
-        fi
       fi
 
       while IFS= read -r template; do
         [[ -n "$template" ]] && GAME_TEST_TEMPLATES+=("$template")
       done < <(grep -oE '@GameTest\([^)]*template[[:space:]]*=[[:space:]]*"[^"]+"' "$source_file" | sed -E 's/.*template[[:space:]]*=[[:space:]]*"([^"]+)"/\1/')
+
+      annotation_count="$(grep -oE '@GameTest[[:space:]]*\(' "$source_file" | wc -l | tr -d ' ' || true)"
+      literal_count="$(grep -oE '@GameTest\([^)]*template[[:space:]]*=[[:space:]]*"[^"]+"' "$source_file" | wc -l | tr -d ' ' || true)"
+      if [[ "${annotation_count:-0}" -gt "${literal_count:-0}" ]]; then
+        NON_LITERAL_TEMPLATE_FILES+=("$source_file")
+      fi
     fi
   done < <(find "${SOURCE_SCAN_ROOTS[@]}" -type f \( -name '*.java' -o -name '*.kt' \) -print0)
 fi
@@ -215,10 +207,20 @@ if [[ "$HAS_GAMETESTS" -eq 1 ]]; then
         warn "GameTest template uses a non-literal or unsupported format: $template"
       fi
     done
-  elif find "$ROOT/src" -type f -path '*/data/*/structures/*.nbt' 2>/dev/null | grep -q .; then
+  elif find "$ROOT/src" -type f -path '*/data/*/structure/*.nbt' 2>/dev/null | grep -q .; then
     pass "GameTest structure fixtures found"
   else
-    fail "GameTest tests detected but no committed data/*/structures/*.nbt fixtures were found"
+    fail "GameTest tests detected but no committed data/*/structure/*.nbt fixtures were found"
+  fi
+
+  if [[ "${#NON_LITERAL_TEMPLATE_FILES[@]}" -gt 0 ]]; then
+    for source_file in "${NON_LITERAL_TEMPLATE_FILES[@]}"; do
+      warn "GameTest template is non-literal and cannot be matched statically: ${source_file#$ROOT/}"
+    done
+  fi
+
+  if [[ "${#NEOFORGE_GAMETEST_CLASSES[@]}" -eq 0 ]]; then
+    warn "GameTest sources were found, but no NeoForge GameTest class could be identified"
   fi
 
   if [[ "${#NEOFORGE_GAMETEST_CLASSES[@]}" -gt 0 ]]; then
@@ -237,32 +239,6 @@ if [[ "$HAS_GAMETESTS" -eq 1 ]]; then
       fi
     done
   fi
-
-  if [[ "${#FABRIC_GAMETEST_CLASSES[@]}" -gt 0 ]]; then
-    FABRIC_MOD_JSON="$ROOT/src/main/resources/fabric.mod.json"
-    if [[ -f "$FABRIC_MOD_JSON" ]]; then
-      pass "Fabric metadata found for GameTests"
-      if grep -Fq '"fabric-gametest"' "$FABRIC_MOD_JSON"; then
-        pass "fabric.mod.json declares fabric-gametest entrypoints"
-      else
-        fail "fabric.mod.json is missing the fabric-gametest entrypoint block"
-      fi
-
-      for fqcn in "${FABRIC_GAMETEST_CLASSES[@]}"; do
-        if grep -Fq "$fqcn" "$FABRIC_MOD_JSON"; then
-          pass "fabric.mod.json registers GameTest entrypoint: $fqcn"
-        else
-          fail "fabric.mod.json is missing the fabric-gametest entry for $fqcn"
-        fi
-      done
-    else
-      fail "Fabric GameTests detected but src/main/resources/fabric.mod.json is missing"
-    fi
-  fi
-fi
-
-if [[ "$HAS_MOCKBUKKIT_TESTS" -eq 0 && "$HAS_GAMETESTS" -eq 0 ]]; then
-  warn "no MockBukkit or GameTest fixtures detected; layout only covers plain unit tests"
 fi
 
 echo ""

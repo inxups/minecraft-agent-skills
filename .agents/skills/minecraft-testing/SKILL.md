@@ -1,39 +1,42 @@
 ---
 name: minecraft-testing
-description: "Write automated tests for Minecraft mods and plugins for 1.21.x. Covers NeoForge GameTests (@GameTest annotation, GameTestHelper assertions, test structure placement), Fabric game tests (fabric-gametest-api-v1), unit testing non-Minecraft logic with JUnit 5, MockBukkit for Paper/Bukkit plugin testing (mock server, mock player, event dispatching, inventory checking), integration testing with a test server via Gradle, and GitHub Actions CI workflows that run GameTests headlessly. Includes patterns for mocking registries, testing event handlers, testing commands, and test-driven development for Minecraft projects. Use when the user asks about testing Minecraft mods or plugins, writing GameTests, setting up MockBukkit, or configuring CI for Minecraft projects."
+description: "Write automated tests for Minecraft 26.2 NeoForge mods. Covers JUnit 5 unit tests for non-Minecraft logic, NeoForge GameTests with GameTestHelper assertions, committed structure templates, event-bus registration, layout validation, and headless test execution. Use when Codex needs to design tests, add JUnit or NeoForge GameTests, validate test project structure, or diagnose missing GameTest templates and registration."
 ---
 
 # Minecraft Testing Skill
 
-## Testing Strategies Overview
+Use plain JUnit for isolated logic and NeoForge GameTests when behavior requires
+registries, blocks, entities, or a running game test environment.
 
-| Approach | Best For | Requires Game? |
-|----------|---------|----------------|
-| **JUnit 5** (pure unit tests) | Logic, data structures, NBT serialization | No |
-| **NeoForge GameTests** | In-game block/entity/world interaction | Yes (test environment) |
-| **Integration server** | Full plugin/mod lifecycle | Yes (dedicated test server) |
+| Approach | Best for | Starts Minecraft |
+|---|---|---|
+| JUnit 5 | Parsing, state machines, cooldowns, serialization | No |
+| NeoForge GameTests | Block, entity, registry, and world interaction | Yes |
 
 ### Routing Boundaries
-- `Use when`: the task is designing or implementing automated tests (unit, mock, gametest, CI test jobs) for Minecraft projects.
-- `Do not use when`: the task is implementing gameplay features rather than testing them (`minecraft-modding`, `minecraft-plugin-dev`, `minecraft-datapack`).
-- `Do not use when`: the task is release automation or publishing pipelines (`minecraft-ci-release`).
+- `Use when`: the task is designing, implementing, or validating automated tests for a NeoForge mod.
+- `Do not use when`: the task is implementing gameplay behavior rather than testing it (`minecraft-modding`).
+- `Do not use when`: the task is release publishing or general CI governance (`minecraft-ci-release`).
 
-## Bundled References And Helpers
+## Bundled Resources
 
-- Layout guide: `references/test-layouts.md`
-- Fixture/layout validator: `./scripts/validate-test-layout.sh --root <project>`
+- Read `references/test-layouts.md` when choosing source and resource paths.
+- Run `./scripts/validate-test-layout.sh --root <project>` before copying a test
+  layout into a downstream project.
+- Use `--strict` when warnings must fail a CI job.
 
-Use the validator before copying a test layout into a real project. It checks for
-the common breakpoints that show up in 1.21.x plugin/mod test repos: missing
-`useJUnitPlatform()`, MockBukkit tests without the dependency, GameTests with
-missing committed template files, and missing NeoForge/Fabric GameTest registration
-metadata.
+The validator checks build/test roots, JUnit Platform configuration, literal
+GameTest template paths, NeoForge metadata, and GameTest class registration. It
+does not compile the downstream project or replace `runGameTestServer`.
 
----
+## JUnit 5
 
-## Unit Testing (JUnit 5 — No Minecraft)
+Keep logic that does not require Minecraft classes in ordinary unit-testable
+types. Inject time, randomness, and filesystem access instead of sleeping or
+mutating global state.
 
-### `build.gradle.kts` additions
+### Gradle configuration
+
 ```kotlin
 dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter:5.11.0")
@@ -48,433 +51,124 @@ tasks.test {
 }
 ```
 
-### Example pure unit test
+### Unit-test pattern
+
 ```java
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
 
 class CooldownManagerTest {
-
     @Test
-    void playerOnCooldown_returnsFalse_afterExpiry() {
-        var manager = new CooldownManager(500L); // 500ms cooldown
-        manager.startCooldown("steve");
-        assertTrue(manager.isOnCooldown("steve"));
-        // fast-forward time by sleeping or injecting a Clock
-        assertFalse(manager.isOnCooldown("notExisting"));
-    }
+    void expiresAtConfiguredDeadline() {
+        Clock clock = Clock.fixed(Instant.parse("2026-07-15T00:00:00Z"), ZoneOffset.UTC);
+        CooldownManager manager = new CooldownManager(Duration.ofSeconds(5), clock);
 
-    @Test
-    void cooldown_throwsIllegalArgument_onNegativeDuration() {
-        assertThrows(IllegalArgumentException.class,
-            () -> new CooldownManager(-1L));
+        manager.start("player-id");
+
+        assertTrue(manager.isActive("player-id"));
+        assertFalse(manager.isActive("missing-player"));
     }
 }
 ```
-
----
-
-## MockBukkit (Paper/Bukkit Plugin Tests)
-
-### `build.gradle.kts`
-```kotlin
-repositories {
-    maven("https://repo.papermc.io/repository/maven-public/")
-    mavenCentral()
-}
-
-dependencies {
-    compileOnly("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
-    testImplementation("org.junit.jupiter:junit-jupiter:5.11.0")
-    testImplementation("org.mockbukkit.mockbukkit:mockbukkit-v1.21:4.0.0")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-}
-
-tasks.test {
-    useJUnitPlatform()
-}
-```
-
-### Setup / teardown pattern
-```java
-import org.mockbukkit.mockbukkit.MockBukkit;
-import org.mockbukkit.mockbukkit.ServerMock;
-import org.mockbukkit.mockbukkit.entity.PlayerMock;
-import org.junit.jupiter.api.*;
-
-class MyPluginTest {
-
-    private static ServerMock server;
-    private static MyPlugin plugin;
-
-    @BeforeAll
-    static void setUp() {
-        // Start mock Bukkit server and load your plugin
-        server = MockBukkit.mock();
-        plugin = MockBukkit.load(MyPlugin.class);
-    }
-
-    @AfterAll
-    static void tearDown() {
-        MockBukkit.unmock();
-    }
-}
-```
-
-### Testing events
-```java
-@Test
-void playerJoin_getsWelcomeMessage() {
-    PlayerMock player = server.addPlayer("Steve");
-    player.simulateJoin(); // fires PlayerJoinEvent
-
-    // Assert the player received the expected message component
-    player.assertSaid("Welcome, Steve!");
-    // Or for Adventure components:
-    assertTrue(player.nextMessage().contains("Welcome"));
-}
-
-@Test
-void onBlockBreak_cancelledForNonOp() {
-    PlayerMock player = server.addPlayer();
-    player.setOp(false);
-
-    Block block = player.getWorld().getBlockAt(0, 64, 0);
-    block.setType(Material.STONE);
-    BlockBreakEvent event = new BlockBreakEvent(block, player);
-    server.getPluginManager().callEvent(event);
-
-    assertTrue(event.isCancelled(), "Non-op should not be able to break blocks");
-}
-```
-
-### Testing commands
-```java
-@Test
-void mypluginInfo_returnsVersion() {
-    PlayerMock player = server.addPlayer("Admin");
-    player.setOp(true);
-
-    boolean result = server.dispatchCommand(player, "myplugin info");
-
-    assertTrue(result);
-    player.assertSaid("Version: " + plugin.getDescription().getVersion());
-}
-
-@Test
-void mypluginReload_requiresOp() {
-    PlayerMock player = server.addPlayer("NonOp");
-    player.setOp(false);
-
-    server.dispatchCommand(player, "myplugin reload");
-
-    player.assertSaid("No permission.");
-}
-```
-
-### Testing inventory / items
-```java
-@Test
-void giveKitCommand_givesPlayerItems() {
-    PlayerMock player = server.addPlayer();
-    
-    server.dispatchCommand(player, "kit starter");
-    
-    // Check inventory
-    assertTrue(player.getInventory().contains(Material.STONE_SWORD));
-    assertTrue(player.getInventory().contains(Material.BREAD, 16));
-}
-```
-
-### Testing scheduler tasks
-```java
-@Test
-void repeatingTask_firesAfterDelay() {
-    PlayerMock player = server.addPlayer();
-    
-    // Execute 40 ticks worth of scheduled tasks
-    server.getScheduler().performTicks(40L);
-    
-    // Assert expected side effect happened
-    assertEquals(2, plugin.getTaskCount());
-}
-```
-
-### Testing Folia-safe scheduler abstractions
-
-MockBukkit does not emulate Folia's region-threaded runtime. The safe pattern is to
-wrap scheduling behind your own interface and unit test the abstraction boundary.
-
-```java
-interface SchedulerFacade {
-    void runPlayerTask(Player player, Runnable task);
-    void runAsync(Runnable task);
-}
-
-@Test
-void playerTask_delegatesThroughFacade() {
-    List<String> calls = new ArrayList<>();
-    SchedulerFacade facade = new SchedulerFacade() {
-        @Override
-        public void runPlayerTask(Player player, Runnable task) {
-            calls.add("player");
-            task.run();
-        }
-
-        @Override
-        public void runAsync(Runnable task) {
-            calls.add("async");
-            task.run();
-        }
-    };
-
-    facade.runPlayerTask(server.addPlayer(), () -> calls.add("ran"));
-    assertEquals(List.of("player", "ran"), calls);
-}
-```
-
-### Testing PDC
-```java
-@Test
-void pdcKillCount_incrementsOnKill() {
-    PlayerMock player = server.addPlayer();
-    NamespacedKey key = new NamespacedKey(plugin, "kills");
-    
-    // Simulate kill event
-    EntityDeathEvent deathEvent = new EntityDeathEvent(
-        server.addMockEntity(EntityType.ZOMBIE), new ArrayList<>(), 0
-    );
-    deathEvent.getEntity().setKiller(player);
-    server.getPluginManager().callEvent(deathEvent);
-    
-    int kills = player.getPersistentDataContainer()
-        .getOrDefault(key, PersistentDataType.INTEGER, 0);
-    assertEquals(1, kills);
-}
-```
-
-### Testing item or chunk PDC writes
-```java
-@Test
-void itemPdc_roundTripsCustomId() {
-    NamespacedKey key = new NamespacedKey(plugin, "custom_id");
-    ItemStack item = new ItemStack(Material.STICK);
-
-    item.editMeta(meta -> meta.getPersistentDataContainer().set(
-        key, PersistentDataType.STRING, "wand"
-    ));
-
-    String value = item.getItemMeta().getPersistentDataContainer()
-        .get(key, PersistentDataType.STRING);
-    assertEquals("wand", value);
-}
-```
-
----
 
 ## NeoForge GameTests
 
-GameTests run inside a Minecraft world. They place a **structure** (the test environment),
-then run assertions using `GameTestHelper`.
+GameTests place a committed structure template, execute server-side test code,
+and finish only when `GameTestHelper.succeed()` is called or an assertion fails.
 
-### Registration
+### Register the test class
+
 ```java
-// In your mod main class:
 @Mod(MyMod.MOD_ID)
-public class MyMod {
+public final class MyMod {
+    public static final String MOD_ID = "mymod";
+
     public MyMod(IEventBus modEventBus) {
         modEventBus.register(MyGameTests.class);
     }
 }
 ```
 
-### Test class
-```java
-import net.minecraft.gametest.framework.*;
-import net.neoforged.neoforge.gametest.GameTestHolder;
-import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
-
-@GameTestHolder(MyMod.MOD_ID)                // registers test namespace
-@PrefixGameTestTemplate(false)               // don't prefix template names
-public class MyGameTests {
-
-    // Default template: 3x3x3 air structure called "mymod:empty"
-    @GameTest(template = "mymod:empty")
-    public static void testBlockInteraction(GameTestHelper helper) {
-        // Place a block
-        helper.setBlock(1, 1, 1, net.minecraft.world.level.block.Blocks.FURNACE);
-        
-        // Run after 1 tick
-        helper.runAfterDelay(1, () -> {
-            // Assert block state
-            helper.assertBlock(new net.minecraft.core.BlockPos(1, 1, 1),
-                b -> b.is(net.minecraft.world.level.block.Blocks.FURNACE),
-                "Expected furnace");
-            
-            helper.succeed();
-        });
-    }
-
-    @GameTest(template = "mymod:empty", timeoutTicks = 200)
-    public static void testEntitySpawn(GameTestHelper helper) {
-        // Spawn entity
-        var entity = helper.spawnWithNoFreeWill(
-            net.minecraft.world.entity.EntityType.ZOMBIE, new net.minecraft.core.BlockPos(2, 2, 2)
-        );
-        
-        helper.runAfterDelay(5, () -> {
-            helper.assertEntityPresent(
-                net.minecraft.world.entity.EntityType.ZOMBIE,
-                new net.minecraft.core.BlockPos(2, 2, 2), 1.0
-            );
-            helper.succeed();
-        });
-    }
-}
-```
-
-### Structure templates (`.nbt` files)
-Place empty structure files at:  
-`src/main/resources/data/mymod/structures/empty.nbt`
-
-Generate them in-game using `/test create mymod:empty 3 3 3` (NeoForge test command).
-Commit the `.nbt` files to version control, and keep the namespace/path aligned
-with each literal `@GameTest(template = "mymod:...")` value so the validator can
-catch missing templates before runtime.
-
-### GameTest setup checklist
-
-1. Verify `.nbt` structure files exist at `src/main/resources/data/<modid>/structures/`
-2. Verify the GameTest class is actually registered (for example `modEventBus.register(MyGameTests.class)`)
-3. Run `./gradlew runGameTestServer` — if tests fail with "Missing template", the `.nbt` file path or name is wrong
-4. Check Gradle output for `PASSED`/`FAILED` per test
-5. If a test times out, increase `timeoutTicks` in the `@GameTest` annotation or add intermediate assertions with `runAfterDelay`
-
-### Running GameTests
-```bash
-./gradlew runGameTestServer
-
-# In-game (dev environment):
-# /test runall
-# /test run mymod:test_block_interaction
-```
-
----
-
-## Fabric GameTests
+### Define a GameTest
 
 ```java
-import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.level.block.Blocks;
+import net.neoforged.neoforge.gametest.GameTestHolder;
+import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
-public class MyFabricGameTests implements FabricGameTest {
-
-    @GameTest(template = EMPTY_STRUCTURE)
-    public void testCustomBlock(GameTestHelper helper) {
-        helper.setBlock(1, 1, 1, Blocks.GOLD_BLOCK.defaultBlockState());
-        
-        helper.runAfterDelay(2, () -> {
-            helper.assertBlock(
-                new BlockPos(1, 1, 1),
-                b -> b.is(Blocks.GOLD_BLOCK),
-                "Gold block should be placed"
-            );
-            helper.succeed();
-        });
+@GameTestHolder("mymod")
+@PrefixGameTestTemplate(false)
+public final class MyGameTests {
+    @GameTest(template = "mymod:empty", timeoutTicks = 100)
+    public static void placesExpectedBlock(GameTestHelper helper) {
+        BlockPos position = new BlockPos(1, 1, 1);
+        helper.setBlock(position, Blocks.GOLD_BLOCK);
+        helper.assertBlockPresent(Blocks.GOLD_BLOCK, position);
+        helper.succeed();
     }
 }
 ```
 
-### Register in `fabric.mod.json`
-```json
-{
-  "entrypoints": {
-    "fabric-gametest": [
-      "com.example.mymod.fabric.MyFabricGameTests"
-    ]
-  }
-}
-```
+For Minecraft 26.2 resources, place the template at:
 
-Keep the `fabric-gametest` entrypoint in sync with the concrete GameTest class
-name. The validator checks both the metadata file and the entry itself.
+`src/main/resources/data/mymod/structure/empty.nbt`
 
----
+Keep literal `@GameTest(template = "namespace:path")` values aligned with
+`data/<modid>/structure/<path>.nbt`. The validator checks literal values exactly.
+When a test uses a constant or computed template name, the validator reports a
+warning because static path matching is not reliable; verify that case with the
+runtime GameTest server.
 
-## `GameTestHelper` Assertions Reference
+## Assertions And Control Flow
 
 ```java
-// Block assertions
-helper.assertBlock(pos, predicate, "message");
-helper.assertBlockState(pos, state -> state.is(Blocks.STONE), "Expected stone");
-helper.assertBlockPresent(Blocks.GOLD_BLOCK, pos);
-helper.assertBlockNotPresent(Blocks.TNT, pos);
+helper.assertBlockPresent(Blocks.GOLD_BLOCK, position);
+helper.assertBlockNotPresent(Blocks.TNT, position);
+helper.assertEntityPresent(EntityType.ZOMBIE, position, 1.0);
+helper.assertEntityNotPresent(EntityType.CREEPER);
+helper.assertContainerContains(position, Items.DIAMOND);
 
-// Entity assertions
-helper.assertEntityPresent(EntityType.ZOMBIE, pos, radius);
-helper.assertEntityNotPresent(EntityType.ZOMBIE);
-helper.assertEntityCount(EntityType.ZOMBIE, expectedCount);
-helper.assertEntityProperty(entity, entity -> entity.getHealth() > 0, "alive");
-
-// Item assertions
-helper.assertContainerContains(pos, Items.DIAMOND);
-helper.assertContainerEmpty(pos);
-
-// Control flow
-helper.succeed();        // mark test as passed — REQUIRED at end
-helper.fail("reason");   // mark test as failed
-helper.runAfterDelay(ticks, runnable); // schedule assertion
-helper.onEachTick(runnable);          // run every tick (use with care)
-helper.succeedWhen(() -> { /* assertions */ }); // poll until assertions pass or timeout
-helper.succeedOnTickWhen(tick, () -> { /* assertions */ });
+helper.runAfterDelay(5, () -> {
+    helper.assertBlockPresent(Blocks.GOLD_BLOCK, position);
+    helper.succeed();
+});
 ```
 
----
+Every success path must call `helper.succeed()`. Prefer a short timeout and a
+single behavior per test so failures remain diagnosable.
 
-## CI: Running Tests in GitHub Actions
+## Workflow
 
-Split CI into fast unit/mock coverage and slower runtime-facing jobs. MockBukkit is great
-for command/event logic, but it does not prove Folia thread safety or real server bootstrap.
+1. Put pure logic in `src/test/java` or `src/test/kotlin` and enable JUnit Platform.
+2. Put NeoForge GameTest classes in a scanned Java/Kotlin source root.
+3. Commit templates under `data/<modid>/structure/`.
+4. Register each GameTest class on the mod event bus.
+5. Run the layout validator:
 
-```yaml
-# .github/workflows/test.yml
-name: Tests
+   ```bash
+   ./scripts/validate-test-layout.sh --root . --strict
+   ```
 
-on: [push, pull_request]
+6. Run downstream tests from the Minecraft project, not from this skills repository:
 
-jobs:
-    unit-tests:
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v4
-            - { uses: actions/setup-java@v4, with: { java-version: '21', distribution: 'temurin' } }
-            - uses: gradle/actions/setup-gradle@v4
-            - { name: Run unit tests, run: ./gradlew test }
+   ```bash
+   ./gradlew test
+   ./gradlew runGameTestServer
+   ```
 
-    game-tests:
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v4
-            - { uses: actions/setup-java@v4, with: { java-version: '21', distribution: 'temurin' } }
-            - uses: gradle/actions/setup-gradle@v4
-            - { name: Run GameTests (headless), run: ./gradlew runGameTestServer, env: { CI: true } }
-
-    layout-checks:
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v4
-            - { name: Validate test layout, run: ./scripts/validate-test-layout.sh --root . }
-```
-
----
+7. Treat a validator pass as structural preflight only; the Gradle test tasks are
+   the authority for compilation and runtime behavior.
 
 ## References
 
-- MockBukkit GitHub: https://github.com/MockBukkit/MockBukkit
-- MockBukkit docs: https://docs.mockbukkit.org/
-- NeoForge GameTest docs: https://docs.neoforged.net/docs/misc/gametest/
-- Fabric GameTest API: https://wiki.fabricmc.net/tutorial:gametests
+- NeoForge GameTest documentation: https://docs.neoforged.net/docs/misc/gametest/
 - JUnit 5 user guide: https://junit.org/junit5/docs/current/user-guide/

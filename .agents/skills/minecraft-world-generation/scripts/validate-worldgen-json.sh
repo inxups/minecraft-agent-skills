@@ -11,6 +11,10 @@ STRICT=0
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --root)
+      if [[ $# -lt 2 || -z "${2:-}" ]]; then
+        echo "$FAIL --root requires a path" >&2
+        exit 2
+      fi
       ROOT="${2:-}"
       shift 2
       ;;
@@ -42,7 +46,7 @@ USAGE
   esac
 done
 
-if ! command -v jq >/dev/null 2>&1; then
+if [[ "${WORLDGEN_FORCE_JQ_SHIM:-0}" == "1" ]] || ! command -v jq >/dev/null 2>&1; then
   SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
   JQ_SHIM="$SCRIPT_DIR/jq-shim.mjs"
   if command -v node >/dev/null 2>&1 && [[ -f "$JQ_SHIM" ]]; then
@@ -71,51 +75,61 @@ json_query_raw() {
   local filter="$1"
   local file="$2"
 
-  if command -v jq >/dev/null 2>&1; then
-    jq -r "$filter" "$file"
-  else
-    node "$JQ_SHIM" -r "$filter" "$file"
-  fi
+  jq -r "$filter" "$file"
 }
 
 TOTAL_SUPPORTED_FILES=0
 
-declare -A VALIDATED_JSON_FILES=()
-declare -A INVALID_JSON_FILES=()
-declare -A CONFIGURED_FEATURES=()
-declare -A PLACED_FEATURES=()
-declare -A STRUCTURES=()
-declare -A TEMPLATE_POOLS=()
-declare -A PROCESSOR_LISTS=()
-declare -A STRUCTURE_TEMPLATES=()
-declare -A DIMENSION_TYPES=()
-declare -A NOISE_SETTINGS=()
-declare -A VANILLA_TEMPLATE_POOLS=(
-  ["minecraft:empty"]=1
-)
-declare -A VANILLA_PROCESSOR_LISTS=(
-  ["minecraft:empty"]=1
-)
-declare -A VANILLA_DIMENSION_TYPES=(
-  ["minecraft:overworld"]=1
-  ["minecraft:overworld_caves"]=1
-  ["minecraft:the_nether"]=1
-  ["minecraft:the_end"]=1
-)
-declare -A VANILLA_NOISE_SETTINGS=(
-  ["minecraft:overworld"]=1
-  ["minecraft:large_biomes"]=1
-  ["minecraft:amplified"]=1
-  ["minecraft:nether"]=1
-  ["minecraft:end"]=1
-  ["minecraft:caves"]=1
-  ["minecraft:floating_islands"]=1
-)
+declare -a VALIDATED_JSON_FILES=()
+declare -a INVALID_JSON_FILES=()
+declare -a CONFIGURED_FEATURES=()
+declare -a PLACED_FEATURES=()
+declare -a STRUCTURES=()
+declare -a TEMPLATE_POOLS=()
+declare -a PROCESSOR_LISTS=()
+declare -a STRUCTURE_TEMPLATES=()
+declare -a STRUCTURE_TAGS=()
+declare -a DIMENSION_TYPES=()
+declare -a NOISE_SETTINGS=()
 
 DATA_ROOT="$ROOT/data"
 
 BIOME_FILES=0
 BIOME_MODIFIER_FILES=0
+
+contains_value() {
+  local needle="$1"
+  shift
+  local value
+  for value in "$@"; do
+    if [[ "$value" == "$needle" ]]; then
+      return 0
+    fi
+  done
+  return 1
+}
+
+is_vanilla_template_pool() {
+  [[ "$1" == "minecraft:empty" ]]
+}
+
+is_vanilla_processor_list() {
+  [[ "$1" == "minecraft:empty" ]]
+}
+
+is_vanilla_dimension_type() {
+  case "$1" in
+    minecraft:overworld|minecraft:overworld_caves|minecraft:the_nether|minecraft:the_end) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+is_vanilla_noise_settings() {
+  case "$1" in
+    minecraft:overworld|minecraft:large_biomes|minecraft:amplified|minecraft:nether|minecraft:end|minecraft:caves|minecraft:floating_islands) return 0 ;;
+    *) return 1 ;;
+  esac
+}
 
 to_id() {
   local file="$1"
@@ -142,21 +156,20 @@ split_ref() {
 check_json() {
   local file="$1"
   if jq empty "$file" >/dev/null 2>&1; then
-    unset 'INVALID_JSON_FILES[$file]'
     pass "valid JSON: ${file#$ROOT/}"
   else
-    INVALID_JSON_FILES["$file"]=1
+    INVALID_JSON_FILES+=("$file")
     fail "invalid JSON: ${file#$ROOT/}"
   fi
 }
 
 check_json_once() {
   local file="$1"
-  if [[ -n "${VALIDATED_JSON_FILES["$file"]+x}" ]]; then
+  if contains_value "$file" "${VALIDATED_JSON_FILES[@]-}"; then
     return
   fi
 
-  VALIDATED_JSON_FILES["$file"]=1
+  VALIDATED_JSON_FILES+=("$file")
   check_json "$file"
   TOTAL_SUPPORTED_FILES=$((TOTAL_SUPPORTED_FILES + 1))
 }
@@ -170,7 +183,7 @@ should_validate_dimension_type_ref() {
     return 0
   fi
 
-  if [[ "$target_ns" == "minecraft" && -n "${VANILLA_DIMENSION_TYPES[$id]:-}" ]]; then
+  if [[ "$target_ns" == "minecraft" ]] && is_vanilla_dimension_type "$id"; then
     return 1
   fi
 
@@ -186,7 +199,7 @@ should_validate_noise_settings_ref() {
     return 0
   fi
 
-  if [[ "$target_ns" == "minecraft" && -n "${VANILLA_NOISE_SETTINGS[$id]:-}" ]]; then
+  if [[ "$target_ns" == "minecraft" ]] && is_vanilla_noise_settings "$id"; then
     return 1
   fi
 
@@ -231,6 +244,23 @@ find_tags_worldgen_jsons() {
   done < <(find "$DATA_ROOT" -mindepth 3 -maxdepth 3 -type d -path "$DATA_ROOT/*/tags/worldgen" -print0 2>/dev/null)
 }
 
+find_worldgen_tag_jsons() {
+  local registry="$1"
+  while IFS= read -r -d '' dir; do
+    find "$dir/$registry" -mindepth 1 -type f -name '*.json' -print0 2>/dev/null
+  done < <(find "$DATA_ROOT" -mindepth 3 -maxdepth 3 -type d -path "$DATA_ROOT/*/tags/worldgen" -print0 2>/dev/null)
+}
+
+to_worldgen_tag_id() {
+  local file="$1"
+  local registry="$2"
+  local rel ns path
+  rel="${file#"$ROOT/data/"}"
+  ns="${rel%%/*}"
+  path="${rel#*/tags/worldgen/$registry/}"
+  echo "$ns:${path%.json}"
+}
+
 find_invalid_tags_worldgen_jsons() {
   while IFS= read -r -d '' dir; do
     find "$dir" -mindepth 1 -maxdepth 1 -type f -name '*.json' -print0 2>/dev/null
@@ -246,7 +276,7 @@ should_validate_template_pool_ref() {
     return 0
   fi
 
-  if [[ "$target_ns" == "minecraft" && -n "${VANILLA_TEMPLATE_POOLS[$id]:-}" ]]; then
+  if [[ "$target_ns" == "minecraft" ]] && is_vanilla_template_pool "$id"; then
     return 1
   fi
 
@@ -262,7 +292,7 @@ should_validate_processor_list_ref() {
     return 0
   fi
 
-  if [[ "$target_ns" == "minecraft" && -n "${VANILLA_PROCESSOR_LISTS[$id]:-}" ]]; then
+  if [[ "$target_ns" == "minecraft" ]] && is_vanilla_processor_list "$id"; then
     return 1
   fi
 
@@ -279,6 +309,32 @@ should_validate_structure_template_ref() {
   fi
 
   [[ -d "$DATA_ROOT/$target_ns/structure" ]]
+}
+
+should_validate_worldgen_ref() {
+  local source_ns="$1"
+  local id="$2"
+  local registry="$3"
+  local target_ns="${id%%:*}"
+
+  if [[ "$target_ns" == "$source_ns" ]]; then
+    return 0
+  fi
+
+  [[ -d "$DATA_ROOT/$target_ns/worldgen/$registry" ]]
+}
+
+should_validate_worldgen_tag_ref() {
+  local source_ns="$1"
+  local id="$2"
+  local registry="$3"
+  local target_ns="${id%%:*}"
+
+  if [[ "$target_ns" == "$source_ns" ]]; then
+    return 0
+  fi
+
+  [[ -d "$DATA_ROOT/$target_ns/tags/worldgen/$registry" ]]
 }
 
 echo "=== Worldgen Validator ==="
@@ -310,42 +366,47 @@ done < <(
 
 while IFS= read -r -d '' f; do
   id="$(to_id "$f")"
-  CONFIGURED_FEATURES["$id"]=1
+  CONFIGURED_FEATURES+=("$id")
 done < <(find_worldgen_jsons 'configured_feature')
 
 while IFS= read -r -d '' f; do
   id="$(to_id "$f")"
-  PLACED_FEATURES["$id"]=1
+  PLACED_FEATURES+=("$id")
 done < <(find_worldgen_jsons 'placed_feature')
 
 while IFS= read -r -d '' f; do
   id="$(to_id "$f")"
-  STRUCTURES["$id"]=1
+  STRUCTURES+=("$id")
 done < <(find_worldgen_jsons 'structure')
 
 while IFS= read -r -d '' f; do
   id="$(to_id "$f")"
-  TEMPLATE_POOLS["$id"]=1
+  TEMPLATE_POOLS+=("$id")
 done < <(find_worldgen_jsons 'template_pool')
 
 while IFS= read -r -d '' f; do
   id="$(to_id "$f")"
-  PROCESSOR_LISTS["$id"]=1
+  PROCESSOR_LISTS+=("$id")
 done < <(find_worldgen_jsons 'processor_list')
 
 while IFS= read -r -d '' f; do
   id="$(to_id "$f")"
-  STRUCTURE_TEMPLATES["$id"]=1
+  STRUCTURE_TEMPLATES+=("$id")
 done < <(find_structure_templates)
 
 while IFS= read -r -d '' f; do
+  id="$(to_worldgen_tag_id "$f" 'structure')"
+  STRUCTURE_TAGS+=("$id")
+done < <(find_worldgen_tag_jsons 'structure')
+
+while IFS= read -r -d '' f; do
   id="$(to_id "$f")"
-  DIMENSION_TYPES["$id"]=1
+  DIMENSION_TYPES+=("$id")
 done < <(find_namespace_jsons 'dimension_type')
 
 while IFS= read -r -d '' f; do
   id="$(to_id "$f")"
-  NOISE_SETTINGS["$id"]=1
+  NOISE_SETTINGS+=("$id")
 done < <(find_worldgen_jsons 'noise_settings')
 
 while IFS= read -r -d '' _; do
@@ -370,7 +431,7 @@ fi
 
 echo "Checking dimension references..."
 while IFS= read -r -d '' dimension_file; do
-  if [[ -n "${INVALID_JSON_FILES["$dimension_file"]:-}" ]]; then
+  if contains_value "$dimension_file" "${INVALID_JSON_FILES[@]-}"; then
     continue
   fi
 
@@ -384,7 +445,7 @@ while IFS= read -r -d '' dimension_file; do
   else
     type_id="$(split_ref "$ns" "$type_ref")"
     if should_validate_dimension_type_ref "$ns" "$type_id"; then
-      if [[ -n "${DIMENSION_TYPES[$type_id]:-}" ]]; then
+      if contains_value "$type_id" "${DIMENSION_TYPES[@]-}"; then
         pass "dimension type target exists: $type_id"
       else
         fail "dimension references missing dimension_type: $type_id"
@@ -403,7 +464,7 @@ while IFS= read -r -d '' dimension_file; do
     continue
   fi
 
-  if [[ -n "${NOISE_SETTINGS[$settings_id]:-}" ]]; then
+  if contains_value "$settings_id" "${NOISE_SETTINGS[@]-}"; then
     pass "dimension noise settings target exists: $settings_id"
   else
     fail "dimension references missing noise_settings: $settings_id"
@@ -412,6 +473,10 @@ done < <(find_namespace_jsons 'dimension')
 
 echo "Checking placed_feature -> configured_feature references..."
 while IFS= read -r -d '' pf_file; do
+  if contains_value "$pf_file" "${INVALID_JSON_FILES[@]-}"; then
+    continue
+  fi
+
   rel="${pf_file#"$ROOT/data/"}"
   ns="${rel%%/*}"
   feature_ref="$(jq -r '.feature? // empty' "$pf_file")"
@@ -428,7 +493,11 @@ while IFS= read -r -d '' pf_file; do
   fi
 
   feature_id="$(split_ref "$ns" "$feature_ref")"
-  if [[ -n "${CONFIGURED_FEATURES[$feature_id]:-}" ]]; then
+  if ! should_validate_worldgen_ref "$ns" "$feature_id" 'configured_feature'; then
+    continue
+  fi
+
+  if contains_value "$feature_id" "${CONFIGURED_FEATURES[@]-}"; then
     pass "placed_feature target exists: $feature_id"
   else
     fail "placed_feature references missing configured_feature: $feature_id"
@@ -437,7 +506,7 @@ done < <(find_worldgen_jsons 'placed_feature')
 
 echo "Checking structure_set -> structure references..."
 while IFS= read -r -d '' ss_file; do
-  if [[ -n "${INVALID_JSON_FILES["$ss_file"]:-}" ]]; then
+  if contains_value "$ss_file" "${INVALID_JSON_FILES[@]-}"; then
     continue
   fi
 
@@ -446,8 +515,25 @@ while IFS= read -r -d '' ss_file; do
   while IFS= read -r sref; do
     sref="$(strip_cr "$sref")"
     [[ -z "$sref" ]] && continue
+
+    if [[ "$sref" == \#* ]]; then
+      tag_id="$(split_ref "$ns" "${sref#\#}")"
+      if ! should_validate_worldgen_tag_ref "$ns" "$tag_id" 'structure'; then
+        continue
+      fi
+      if contains_value "$tag_id" "${STRUCTURE_TAGS[@]-}"; then
+        pass "structure_set tag target exists: #$tag_id"
+      else
+        fail "structure_set references missing structure tag: #$tag_id"
+      fi
+      continue
+    fi
+
     sid="$(split_ref "$ns" "$sref")"
-    if [[ -n "${STRUCTURES[$sid]:-}" ]]; then
+    if ! should_validate_worldgen_ref "$ns" "$sid" 'structure'; then
+      continue
+    fi
+    if contains_value "$sid" "${STRUCTURES[@]-}"; then
       pass "structure_set target exists: $sid"
     else
       fail "structure_set references missing structure: $sid"
@@ -457,7 +543,7 @@ done < <(find_worldgen_jsons 'structure_set')
 
 echo "Checking jigsaw structure and template_pool references..."
 while IFS= read -r -d '' structure_file; do
-  if [[ -n "${INVALID_JSON_FILES["$structure_file"]:-}" ]]; then
+  if contains_value "$structure_file" "${INVALID_JSON_FILES[@]-}"; then
     continue
   fi
 
@@ -480,7 +566,7 @@ while IFS= read -r -d '' structure_file; do
 
   start_pool_id="$(split_ref "$ns" "$start_pool_ref")"
   if should_validate_template_pool_ref "$ns" "$start_pool_id"; then
-    if [[ -n "${TEMPLATE_POOLS[$start_pool_id]:-}" ]]; then
+    if contains_value "$start_pool_id" "${TEMPLATE_POOLS[@]-}"; then
       pass "jigsaw start_pool target exists: $start_pool_id"
     else
       fail "jigsaw structure references missing template_pool: $start_pool_id"
@@ -489,7 +575,7 @@ while IFS= read -r -d '' structure_file; do
 done < <(find_worldgen_jsons 'structure')
 
 while IFS= read -r -d '' pool_file; do
-  if [[ -n "${INVALID_JSON_FILES["$pool_file"]:-}" ]]; then
+  if contains_value "$pool_file" "${INVALID_JSON_FILES[@]-}"; then
     continue
   fi
 
@@ -504,7 +590,7 @@ while IFS= read -r -d '' pool_file; do
     else
       location_id="$(split_ref "$ns" "$location_ref")"
       if should_validate_structure_template_ref "$ns" "$location_id"; then
-        if [[ -n "${STRUCTURE_TEMPLATES[$location_id]:-}" ]]; then
+        if contains_value "$location_id" "${STRUCTURE_TEMPLATES[@]-}"; then
           pass "template_pool structure template target exists: $location_id"
         else
           fail "template_pool element references missing structure template: $location_id"
@@ -517,7 +603,7 @@ while IFS= read -r -d '' pool_file; do
     else
       processors_id="$(split_ref "$ns" "$processors_ref")"
       if should_validate_processor_list_ref "$ns" "$processors_id"; then
-        if [[ -n "${PROCESSOR_LISTS[$processors_id]:-}" ]]; then
+        if contains_value "$processors_id" "${PROCESSOR_LISTS[@]-}"; then
           pass "template_pool processor_list target exists: $processors_id"
         else
           fail "template_pool element references missing processor_list: $processors_id"
@@ -534,7 +620,7 @@ done < <(find_worldgen_jsons 'template_pool')
 
 echo "Checking biome feature references..."
 while IFS= read -r -d '' biome_file; do
-  if [[ -n "${INVALID_JSON_FILES["$biome_file"]:-}" ]]; then
+  if contains_value "$biome_file" "${INVALID_JSON_FILES[@]-}"; then
     continue
   fi
 
@@ -549,7 +635,10 @@ while IFS= read -r -d '' biome_file; do
     fi
 
     fid="$(split_ref "$ns" "$fref")"
-    if [[ -n "${PLACED_FEATURES[$fid]:-}" ]]; then
+    if ! should_validate_worldgen_ref "$ns" "$fid" 'placed_feature'; then
+      continue
+    fi
+    if contains_value "$fid" "${PLACED_FEATURES[@]-}"; then
       pass "biome feature target exists: $fid"
     else
       fail "biome references missing placed_feature: $fid"
@@ -559,7 +648,7 @@ done < <(find_worldgen_jsons 'biome')
 
 echo "Checking biome_modifier feature/structure references..."
 while IFS= read -r -d '' mod_file; do
-  if [[ -n "${INVALID_JSON_FILES["$mod_file"]:-}" ]]; then
+  if contains_value "$mod_file" "${INVALID_JSON_FILES[@]-}"; then
     continue
   fi
 
@@ -575,23 +664,43 @@ while IFS= read -r -d '' mod_file; do
     fi
 
     rid="$(split_ref "$ns" "$ref")"
-    if [[ -n "${PLACED_FEATURES[$rid]:-}" ]]; then
+    if ! should_validate_worldgen_ref "$ns" "$rid" 'placed_feature'; then
+      continue
+    fi
+    if contains_value "$rid" "${PLACED_FEATURES[@]-}"; then
       pass "biome_modifier feature target exists: $rid"
     else
       fail "biome_modifier references missing placed_feature: $rid"
     fi
-  done < <(jq -r '(.features? // empty), (.features[]? // empty)' "$mod_file")
+  done < <(jq -r '(.features? // empty) | if type == "array" then .[] else . end' "$mod_file")
 
   while IFS= read -r ref; do
     ref="$(strip_cr "$ref")"
     [[ -z "$ref" ]] && continue
+
+    if [[ "$ref" == \#* ]]; then
+      tag_id="$(split_ref "$ns" "${ref#\#}")"
+      if ! should_validate_worldgen_tag_ref "$ns" "$tag_id" 'structure'; then
+        continue
+      fi
+      if contains_value "$tag_id" "${STRUCTURE_TAGS[@]-}"; then
+        pass "biome_modifier structure tag target exists: #$tag_id"
+      else
+        fail "biome_modifier references missing structure tag: #$tag_id"
+      fi
+      continue
+    fi
+
     rid="$(split_ref "$ns" "$ref")"
-    if [[ -n "${STRUCTURES[$rid]:-}" ]]; then
+    if ! should_validate_worldgen_ref "$ns" "$rid" 'structure'; then
+      continue
+    fi
+    if contains_value "$rid" "${STRUCTURES[@]-}"; then
       pass "biome_modifier structure target exists: $rid"
     else
       fail "biome_modifier references missing structure: $rid"
     fi
-  done < <(jq -r '(.structures? // empty), (.structures[]? // empty)' "$mod_file")
+  done < <(jq -r '(.structures? // empty) | if type == "array" then .[] else . end' "$mod_file")
 done < <(find_neoforge_jsons 'biome_modifier')
 
 echo ""

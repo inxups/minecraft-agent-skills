@@ -8,7 +8,11 @@ let root = path.join(process.cwd(), ".github", "workflows");
 for (let i = 0; i < args.length; i += 1) {
   const arg = args[i];
   if (arg === "--root") {
-    root = path.resolve(args[i + 1] ?? "");
+    if (!args[i + 1]) {
+      console.error("[FAIL] --root requires a path");
+      process.exit(2);
+    }
+    root = path.resolve(args[i + 1]);
     i += 1;
     continue;
   }
@@ -36,7 +40,14 @@ function addError(file, lineNumber, message) {
 }
 
 function validateUse(file, lineNumber, ref) {
-  if (ref.startsWith("./") || ref.startsWith("docker://")) return;
+  if (ref.startsWith("./")) return;
+
+  if (ref.startsWith("docker://")) {
+    if (!/^docker:\/\/[^@\s]+@sha256:[0-9a-f]{64}$/.test(ref)) {
+      addError(file, lineNumber, `container action must be pinned to a sha256 digest: ${ref}`);
+    }
+    return;
+  }
 
   if (!ref.includes("@")) {
     addError(file, lineNumber, `action reference is missing a ref: ${ref}`);

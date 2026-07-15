@@ -11,3 +11,4 @@ jobs:
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
       - uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7
+      - uses: docker://alpine@sha256:8a1f59ffb675680d47db6337b49d22281a139e9d709335b492be023728e11715

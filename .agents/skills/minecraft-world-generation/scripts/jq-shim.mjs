@@ -73,15 +73,11 @@ function collectSounds(input) {
 }
 
 function flattenOptionalField(input, field) {
-  const results = [];
   const value = input?.[field];
-  if (present(value)) results.push(value);
   if (Array.isArray(value)) {
-    for (const entry of value) {
-      if (present(entry)) results.push(entry);
-    }
+    return value.filter(present);
   }
-  return results;
+  return present(value) ? [value] : [];
 }
 
 function collectNestedFeatureRefs(input) {
@@ -154,9 +150,9 @@ function evaluateFilter(input, filter) {
       return collectTemplatePoolElementRows(input);
     case ".features[][]?//empty":
       return collectNestedFeatureRefs(input);
-    case "(.features?//empty),(.features[]?//empty)":
+    case "(.features?//empty)|iftype==\"array\"then.[]else.end":
       return flattenOptionalField(input, "features");
-    case "(.structures?//empty),(.structures[]?//empty)":
+    case "(.structures?//empty)|iftype==\"array\"then.[]else.end":
       return flattenOptionalField(input, "structures");
     default:
       throw new Error(`unsupported jq filter: ${filter}`);
@@ -222,7 +218,7 @@ try {
   }
 
   if (results.length === 0) {
-    process.exit(1);
+    process.exit(4);
   }
 
   const last = results[results.length - 1];

@@ -55,6 +55,13 @@ function sameFile(left, right) {
   return leftBuffer.length === rightBuffer.length && leftBuffer.equals(rightBuffer);
 }
 
+function sameExecutableMode(left, right) {
+  if (process.platform === "win32") return true;
+  const leftExecutable = fs.statSync(left).mode & 0o111;
+  const rightExecutable = fs.statSync(right).mode & 0o111;
+  return leftExecutable === rightExecutable;
+}
+
 function syncMirror(mirrorDir) {
   fs.mkdirSync(path.dirname(mirrorDir), { recursive: true });
   fs.rmSync(mirrorDir, { recursive: true, force: true });
@@ -92,7 +99,7 @@ function checkMirror(mirrorDir) {
       drift.push(`extra ${rel(mirrorFile)}`);
     } else if (!fs.existsSync(mirrorFile)) {
       drift.push(`missing ${rel(mirrorFile)}`);
-    } else if (!sameFile(canonicalFile, mirrorFile)) {
+    } else if (!sameFile(canonicalFile, mirrorFile) || !sameExecutableMode(canonicalFile, mirrorFile)) {
       drift.push(`changed ${rel(mirrorFile)}`);
     }
   }

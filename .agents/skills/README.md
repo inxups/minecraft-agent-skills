@@ -1,50 +1,41 @@
 # Minecraft Skills Index
 
-This index lists all Minecraft skills in this repository.
-Canonical source files live under `.agents/skills/`, and this README is mirrored
-to compatibility trees.
-Most skill content targets Minecraft `26.2`.
-Minecraft 26.2 changed Java, and several vanilla data surfaces; 
-treat 26.2 work as a porting task that requires fresh upstream
-verification before applying these examples unchanged.
+This index lists every Minecraft skill in this repository. Canonical source
+files live under `.agents/skills/`; compatibility trees and the plugin bundle
+are generated from this directory.
 
-Use this index as a quick router before opening individual `SKILL.md` files.
-Some skills also include local `references/` and `scripts/` support assets; the
-table below is a router, not an exhaustive layout listing.
+Most skill content targets Minecraft `26.2` and Java `25`. Treat exact loader,
+game, and data-format APIs as versioned surfaces and verify them against the
+target project's dependency metadata before applying examples unchanged.
 
 ## Skill Catalog
 
-| Skill | Primary use cases | Choose this instead when |
+| Skill | Primary use cases | Out of scope |
 |---|---|---|
-| `minecraft-modding` | Build NeoForge mod (blocks, items, entities, GUIs, datagen) |
-| `minecraft-datapack` | Vanilla datapacks: functions, advancements, recipes, loot tables | 
-| `minecraft-world-generation` | Worldgen JSON/code: biomes, dimensions, structures, features | You need building operations with WorldEdit (`minecraft-worldedit-ops`) |
-| `minecraft-resource-pack` | Textures, models, sounds, fonts, shaders, pack metadata | You need gameplay logic or server operations (pick a development/admin skill) |
-| `minecraft-imagegen` | Generate pack icons, promo art, thumbnails, concept textures, and UI mockups | You need deterministic pack structure, model JSON, sounds, or shader files (`minecraft-resource-pack`) |
-| `minecraft-testing` | JUnit, MockBukkit, NeoForge/Fabric GameTests, CI test wiring | You need release pipelines and publishing (`minecraft-ci-release`) |
-| `minecraft-ci-release` | GitHub Actions, release automation, Modrinth/CurseForge publishing | You need local implementation details of mod/plugin features (pick a dev skill) |
+| `minecraft-modding` | NeoForge mod code, registries, events, networking, and datagen | Vanilla-only content and server plugin development |
+| `minecraft-testing` | JUnit and NeoForge GameTest layouts and validation | Gameplay implementation and release publishing |
+| `minecraft-ci-release` | GitHub Actions, release automation, Modrinth/CurseForge publishing | Local gameplay implementation |
+| `minecraft-world-generation` | Biomes, dimensions, features, structures, and NeoForge biome modifiers | General recipes, advancements, and command orchestration |
+| `minecraft-imagegen` | Pack icons, promo art, thumbnails, concept textures, and UI mockups | Deterministic pack JSON, audio, and shader implementation |
 
 ## Overlap Boundaries
 
-
-- Use `minecraft-imagegen` for raster art, thumbnails, pack icons, and concept textures; use `minecraft-resource-pack` when the task is final pack structure plus JSON/audio/shader implementation.
-- `minecraft-imagegen` also requires a host that exposes image generation; treat it as Codex-first unless the current agent explicitly supports an equivalent image tool.
+- Use `minecraft-modding` for Java/Kotlin implementation and `minecraft-testing`
+  for its automated verification.
+- Use `minecraft-world-generation` for registry-backed worldgen data and
+  `minecraft-modding` for the surrounding NeoForge integration.
+- Use `minecraft-ci-release` after local build and test behavior is established.
+- Use `minecraft-imagegen` for bitmap ideation and generation; complete final
+  pack wiring in the target project using its actual resource-pack layout.
 
 ## Sync Model
 
-Edit only this canonical tree:
-
-- `.agents/skills/`
-
-Then mirror to compatibility trees:
-
-- `.codex/skills/`
-- `.claude/skills/`
-- `plugins/minecraft-codex-skills/skills/`
-
-Commands:
+Edit only `.agents/skills/`, then run:
 
 ```bash
-bash ./scripts/sync-skills-layout.sh sync
+npm run sync:skills
 npm run audit:skills
 ```
+
+The sync command refreshes `.codex/skills/`, `.claude/skills/`, and
+`plugins/minecraft-codex-skills/skills/` from this canonical tree.

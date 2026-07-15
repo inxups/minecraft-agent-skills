@@ -27,7 +27,7 @@ public class MyMod {
         modEventBus.addListener(this::commonSetup);
         modEventBus.addListener(this::addCreativeTabItems);
 
-        // Register for in-game events on the GAME event bus (NeoForge 1.20.5+)
+        // Register for in-game events on the GAME event bus
         NeoForge.EVENT_BUS.register(this);
         // Prefer @EventBusSubscriber on a separate class over registering `this`
     }
@@ -50,12 +50,11 @@ public class MyMod {
 
 ## neoforge.mods.toml (META-INF/neoforge.mods.toml)
 
-> File renamed from `mods.toml` to `neoforge.mods.toml` in NeoForge 26.2.
-> Always use `neoforge.mods.toml` for 26.2 projects.
+> Use `neoforge.mods.toml` for NeoForge 26.2 projects.
 
 ```toml
 modLoader="javafml"
-loaderVersion="[1,)"
+loaderVersion="[4,)"
 license="MIT"
 
 [[mods]]
@@ -70,14 +69,14 @@ logoFile="mymod.png"
 [[dependencies.mymod]]
 modId="neoforge"
 type="required"
-versionRange="[21.11,)"
+versionRange="[26.2,)"
 ordering="NONE"
 side="BOTH"
 
 [[dependencies.mymod]]
 modId="minecraft"
 type="required"
-versionRange="[1.21.11,1.22)"
+versionRange="[26.2,26.3)"
 ordering="NONE"
 side="BOTH"
 ```
@@ -179,7 +178,7 @@ NeoForge has two event buses:
 - **MOD bus** (`IEventBus` injected into constructor): lifecycle events, registration events
 - **GAME bus** (`NeoForge.EVENT_BUS`): in-game events  
   Import: `net.neoforged.neoforge.common.NeoForge`  
-  (`MinecraftForge.EVENT_BUS` was removed in NeoForge 1.20.5)
+  (do not use the legacy Forge event-bus singleton)
 
 ```java
 // Recommended: separate class with @EventBusSubscriber
@@ -307,7 +306,7 @@ entity.getCapability(MyCapProvider.MY_CAP).ifPresent(cap -> {
 
 ---
 
-## Network Packets (1.21 SimpleChannel)
+## Network Payloads
 
 ```java
 // Register a payload (packet) type
@@ -370,11 +369,11 @@ PacketDistributor.sendToServer(new MyPayload(42));
 org.gradle.jvmargs=-Xmx3G
 org.gradle.daemon=false
 
-minecraft_version=1.21.11
-minecraft_version_range=[1.21.11,1.22)
-neo_version=21.11.42
-neo_version_range=[21.11,)
-loader_version_range=[1,)
+minecraft_version=26.2
+minecraft_version_range=[26.2,26.3)
+neo_version=26.2.0.15-beta
+neo_version_range=[26.2,)
+loader_version_range=[4,)
 
 mod_id=mymod
 mod_name=My Mod
@@ -390,7 +389,7 @@ mod_description=A cool Minecraft mod.
 
 ---
 
-## Useful NeoForge Classes (1.21.x Quick Reference)
+## Useful NeoForge Classes (26.2 Quick Reference)
 
 |Need|Class|
 |---|---|

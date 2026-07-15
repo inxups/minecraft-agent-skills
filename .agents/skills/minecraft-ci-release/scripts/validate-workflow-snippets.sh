@@ -9,6 +9,10 @@ YAML_MODULE="$SCRIPT_DIR/vendor/js-yaml.min.cjs"
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --root)
+      if [[ $# -lt 2 || -z "${2:-}" ]]; then
+        echo "[FAIL] --root requires a path" >&2
+        exit 2
+      fi
       ROOT="${2:-}"
       shift 2
       ;;
@@ -22,7 +26,8 @@ Usage: validate-workflow-snippets.sh [--root <path>] [--strict]
 
 Validates workflow snippets inside SKILL.md:
 - extracts fenced yaml/yml code blocks
-- checks required workflow keys (name/on/jobs) for workflow-like snippets
+- validates every YAML snippet and checks required workflow keys (name/on/jobs)
+- requires action references to use full commit SHAs and container actions to use digests
 - detects unresolved placeholders and obviously broken globs
 - checks secret usage vs documented secret list in SKILL.md
 USAGE
@@ -74,10 +79,10 @@ const fail = (msg) => {
 console.log('=== Workflow Snippet Validator ===');
 
 const blocks = [];
-const fenceRe = /```(?:yaml|yml)\n([\s\S]*?)```/g;
+const fenceRe = /(```|~~~)(?:yaml|yml)(?:[ \t][^\n]*)?\n([\s\S]*?)\1/g;
 let match;
 while ((match = fenceRe.exec(text)) !== null) {
-  blocks.push(match[1]);
+  blocks.push(match[2]);
 }
 
 if (blocks.length === 0) {
@@ -134,6 +139,26 @@ const placeholderRe = /(REPLACE_ME|TODO|<[^>]+>|yourname|your-repo|path\/to\/|ex
 const badGlobRe = /\*\*\*|\*\*\/\*\*\/|\.\*\*/;
 const mappingLineRe = /^(?:"[^"]+"|'[^']+'|[^:#][^:]*?):(?:\s+.*)?$/;
 
+function validateActionRef(label, lineNumber, ref) {
+  if (ref.startsWith('./')) return;
+
+  if (ref.startsWith('docker://')) {
+    if (!/^docker:\/\/[^@\s]+@sha256:[0-9a-f]{64}$/.test(ref)) {
+      fail(`${label} line ${lineNumber} container action must be pinned to a sha256 digest: ${ref}`);
+    }
+    return;
+  }
+
+  if (!ref.includes('@')) {
+    fail(`${label} line ${lineNumber} action reference is missing a ref: ${ref}`);
+    return;
+  }
+
+  if (!/@[0-9a-f]{40}$/.test(ref)) {
+    fail(`${label} line ${lineNumber} action must be pinned to a full commit SHA: ${ref}`);
+  }
+}
+
 function inspectBlock(block) {
   const topLevelKeys = new Set();
   const lines = block.split(/\r?\n/);
@@ -171,17 +196,17 @@ blocks.forEach((block, idx) => {
   const label = `block #${idx + 1}`;
   const { topLevelKeys } = inspectBlock(block);
   const isWorkflowLike = topLevelKeys.has('jobs') || topLevelKeys.has('on');
+  let parsed;
+
+  try {
+    parsed = yaml.load(block);
+  } catch (error) {
+    const message = String(error.message || error).split('\n')[0];
+    fail(`${label} is not valid YAML: ${message}`);
+    return;
+  }
 
   if (isWorkflowLike) {
-    let parsed;
-    try {
-      parsed = yaml.load(block);
-    } catch (error) {
-      const message = String(error.message || error).split('\n')[0];
-      fail(`${label} is not valid YAML: ${message}`);
-      return;
-    }
-
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
       fail(`${label} is not valid YAML: top-level workflow document must be a mapping`);
       return;
@@ -205,6 +230,9 @@ blocks.forEach((block, idx) => {
 
   const blockLines = block.split(/\r?\n/);
   blockLines.forEach((line, lineIdx) => {
+    const usesMatch = line.match(/^\s*(?:-\s*)?uses:\s*['"]?([^'"#\s]+)['"]?(?:\s+#.*)?$/);
+    if (usesMatch) validateActionRef(label, lineIdx + 1, usesMatch[1]);
+
     if (/\t/.test(line)) {
       fail(`${label} line ${lineIdx + 1} contains tab indentation`);
     }

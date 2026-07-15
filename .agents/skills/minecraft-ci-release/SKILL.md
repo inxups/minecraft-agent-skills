@@ -15,8 +15,8 @@ Tag push (v*) → build + publish to Modrinth + CurseForge + GitHub Releases
 
 ### Routing Boundaries
 - `Use when`: the task is CI/CD pipelines, release automation, artifact publishing, versioning, or release governance.
-- `Do not use when`: the task is implementing gameplay/plugin/mod features (`minecraft-modding`, `minecraft-plugin-dev`, `minecraft-datapack`).
-- `Do not use when`: the task is server runtime operations and infrastructure tuning (`minecraft-server-admin`).
+- `Do not use when`: the task is implementing gameplay features (`minecraft-modding`) or writing test logic (`minecraft-testing`).
+- `Do not use when`: the task does not change build, release, publishing, or repository governance behavior.
 
 ---
 
@@ -25,9 +25,9 @@ Tag push (v*) → build + publish to Modrinth + CurseForge + GitHub Releases
 Minecraft mod versions follow: `{mod_version}+{mc_version}`
 
 ```
-1.0.0+1.21.11  ← mod 1.0.0 for MC 1.21.11
-1.2.3+1.21.11
-2.0.0+1.21.11
+1.0.0+26.2  <- mod 1.0.0 for MC 26.2
+1.2.3+26.2
+2.0.0+26.2
 ```
 
 Git tag format: `v1.0.0` (mod version only, not MC version in the tag).
@@ -60,16 +60,16 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Set up Java 25
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4
         with:
           java-version: "25"
           distribution: "temurin"
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@0b6dd653ba04f4f93bf581ec31e66cbd7dcb644d # v4
         with:
           cache-read-only: ${{ github.ref != 'refs/heads/main' }}
 
@@ -80,7 +80,7 @@ jobs:
         run: ./gradlew :${{ matrix.platform }}:build --no-daemon
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: mod-${{ matrix.platform }}-${{ github.sha }}
           path: ${{ matrix.platform }}/build/libs/*.jar
@@ -110,16 +110,16 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Set up Java 25
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4
         with:
           java-version: "25"
           distribution: "temurin"
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@0b6dd653ba04f4f93bf581ec31e66cbd7dcb644d # v4
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
@@ -138,7 +138,7 @@ jobs:
           CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
           files: |
             fabric/build/libs/*.jar
@@ -165,15 +165,15 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4
         with:
           java-version: "25"
           distribution: "temurin"
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@0b6dd653ba04f4f93bf581ec31e66cbd7dcb644d # v4
       - run: chmod +x gradlew
       - run: ./gradlew shadowJar --no-daemon
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: plugin-${{ github.sha }}
           path: build/libs/*.jar
@@ -181,12 +181,12 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4
         with:
           java-version: "25"
           distribution: "temurin"
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@0b6dd653ba04f4f93bf581ec31e66cbd7dcb644d # v4
       - run: ./gradlew test --no-daemon
 ```
 
@@ -298,7 +298,7 @@ curseforge_project_id=123456
 | New features, no breaking changes | Minor: `1.1.0` |
 | Bug fixes only | Patch: `1.0.1` |
 | API/config breaking changes | Major: `2.0.0` |
-| Minecraft version update | Keep mod version, change `+1.21.11` suffix |
+| Minecraft version update | Keep mod version, change the `+26.2` suffix |
 | Pre-release | `1.0.0-beta.1`, `1.0.0-rc.1` |
 
 ---
@@ -357,7 +357,7 @@ updates:
 ```yaml
 # In all workflow jobs:
 - name: Setup Gradle
-  uses: gradle/actions/setup-gradle@v4
+  uses: gradle/actions/setup-gradle@0b6dd653ba04f4f93bf581ec31e66cbd7dcb644d # v4
   with:
     # Read-only cache on PRs, read-write on main
     cache-read-only: ${{ github.event_name == 'pull_request' }}
@@ -421,6 +421,7 @@ on repo-root `node_modules`.
 
 What it checks:
 - YAML snippet structure for workflow-like blocks (`name`, `on`, `jobs`)
+- Full commit-SHA pins for actions and SHA-256 digest pins for container actions
 - Unresolved placeholder tokens and suspicious glob patterns
 - `${{ secrets.* }}` usage stays consistent with secrets documented in this file
 

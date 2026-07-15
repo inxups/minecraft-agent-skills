@@ -61,7 +61,7 @@ Recipe:
 
 1. Keep the image flat, front-on, and lighting-neutral.
 2. Ask for material qualities, not scene storytelling.
-3. Hand the approved concept to `minecraft-resource-pack` for the final pixel-pass, tiling, and pack integration.
+3. Complete the final pixel pass, tiling, and pack integration in the target project.
 
 ## Server Banner or Header
 

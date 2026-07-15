@@ -10,9 +10,7 @@ description: "Write automated tests for Minecraft mods and plugins for 1.21.x. C
 | Approach | Best For | Requires Game? |
 |----------|---------|----------------|
 | **JUnit 5** (pure unit tests) | Logic, data structures, NBT serialization | No |
-| **MockBukkit** | Bukkit/Paper plugin events, commands, inventory | No (mocked server) |
 | **NeoForge GameTests** | In-game block/entity/world interaction | Yes (test environment) |
-| **Fabric GameTests** | In-game block/entity/world interaction | Yes (test environment) |
 | **Integration server** | Full plugin/mod lifecycle | Yes (dedicated test server) |
 
 ### Routing Boundaries
