@@ -1,586 +1,475 @@
-# Common Minecraft Modding Patterns
+# Common NeoForge 26.2 Patterns
 
-NeoForge 26.2 patterns for blocks, items, entities, data generation, commands,
-recipes, and related resources. Verify APIs against the downstream project's
-resolved NeoForge version before applying examples unchanged.
+Use these patterns with Minecraft `26.2`, Java `25`, and official names. Verify
+the exact NeoForge artifact in the downstream build before changing code.
 
----
+## Complete Simple Block
 
-## Blocks
+Registry declarations:
 
-### Simple Full-Cube Block
+```java
+public final class ModBlocks {
+    public static final DeferredRegister.Blocks BLOCKS =
+        DeferredRegister.createBlocks(MyMod.MOD_ID);
 
-Files needed:
-
-1. Java class (if custom behavior) or `registerSimpleBlock()` call
-2. `assets/<modid>/blockstates/<name>.json`
-3. `assets/<modid>/models/block/<name>.json`
-4. `assets/<modid>/models/item/<name>.json`
-5. `assets/<modid>/textures/block/<name>.png`
-6. `data/<modid>/loot_table/blocks/<name>.json`
-7. `en_us.json` entry
-
-```json
-// blockstates/my_block.json
-{
-  "variants": {
-    "": { "model": "mymod:block/my_block" }
-  }
+    public static final DeferredBlock<Block> POLISHED_SLATE =
+        BLOCKS.registerSimpleBlock("polished_slate", properties -> properties
+            .mapColor(MapColor.COLOR_GRAY)
+            .strength(2.0F, 6.0F)
+            .sound(SoundType.DEEPSLATE)
+            .requiresCorrectToolForDrops());
 }
 
-// models/block/my_block.json
+public final class ModItems {
+    public static final DeferredRegister.Items ITEMS =
+        DeferredRegister.createItems(MyMod.MOD_ID);
+
+    public static final DeferredItem<BlockItem> POLISHED_SLATE =
+        ITEMS.registerSimpleBlockItem(ModBlocks.POLISHED_SLATE);
+}
+```
+
+Required resource set:
+
+```text
+assets/mymod/blockstates/polished_slate.json
+assets/mymod/items/polished_slate.json
+assets/mymod/models/block/polished_slate.json
+assets/mymod/models/item/polished_slate.json
+assets/mymod/textures/block/polished_slate.png
+assets/mymod/lang/en_us.json
+data/mymod/loot_table/blocks/polished_slate.json
+data/mymod/recipe/polished_slate.json
+data/minecraft/tags/block/mineable/pickaxe.json
+data/minecraft/tags/block/needs_stone_tool.json
+```
+
+`assets/mymod/blockstates/polished_slate.json`:
+
+```json
+{
+  "variants": {
+    "": {
+      "model": "mymod:block/polished_slate"
+    }
+  }
+}
+```
+
+`assets/mymod/models/block/polished_slate.json`:
+
+```json
 {
   "parent": "minecraft:block/cube_all",
   "textures": {
-    "all": "mymod:block/my_block"
+    "all": "mymod:block/polished_slate"
   }
 }
+```
 
-// models/item/my_block.json
+`assets/mymod/items/polished_slate.json`:
+
+```json
 {
-  "parent": "mymod:block/my_block"
+  "model": {
+    "model": "mymod:item/polished_slate",
+    "type": "minecraft:model"
+  }
 }
+```
 
-// loot_table/blocks/my_block.json  (drops itself)
+`assets/mymod/models/item/polished_slate.json`:
+
+```json
+{
+  "parent": "mymod:block/polished_slate"
+}
+```
+
+`data/mymod/loot_table/blocks/polished_slate.json`:
+
+```json
 {
   "type": "minecraft:block",
-  "pools": [{
-    "rolls": 1,
-    "entries": [{
-      "type": "minecraft:item",
-      "name": "mymod:my_block"
-    }],
-    "conditions": [{
-      "condition": "minecraft:survives_explosion"
-    }]
-  }]
-}
-```
-
----
-
-### Directional Block (faces a direction when placed)
-
-```java
-public class MyDirectionalBlock extends DirectionalBlock {
-    public static final DirectionProperty FACING = DirectionalBlock.FACING;
-
-    public MyDirectionalBlock(Properties props) {
-        super(props);
-        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
+  "pools": [
+    {
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "mymod:polished_slate"
+        }
+      ],
+      "rolls": 1.0
     }
-
-    @Override
-    public BlockState getStateForPlacement(BlockPlaceContext ctx) {
-        return defaultBlockState().setValue(FACING, ctx.getNearestLookingDirection().getOpposite());
-    }
-
-    @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING);
-    }
+  ],
+  "random_sequence": "mymod:blocks/polished_slate"
 }
 ```
+
+`data/mymod/recipe/polished_slate.json`:
 
 ```json
-// blockstates/my_directional_block.json
 {
-  "variants": {
-    "facing=north": { "model": "mymod:block/my_directional_block" },
-    "facing=south": { "model": "mymod:block/my_directional_block", "y": 180 },
-    "facing=west":  { "model": "mymod:block/my_directional_block", "y": 270 },
-    "facing=east":  { "model": "mymod:block/my_directional_block", "y": 90 },
-    "facing=up":    { "model": "mymod:block/my_directional_block", "x": -90 },
-    "facing=down":  { "model": "mymod:block/my_directional_block", "x": 90 }
-  }
+  "category": "building",
+  "key": {
+    "S": "minecraft:stone"
+  },
+  "pattern": [
+    "SS",
+    "SS"
+  ],
+  "result": {
+    "count": 4,
+    "id": "mymod:polished_slate"
+  },
+  "type": "minecraft:crafting_shaped"
 }
 ```
 
----
+Tags targeting vanilla registries belong under the `minecraft` namespace.
 
-### Slab Block
+`data/minecraft/tags/block/mineable/pickaxe.json`:
+
+```json
+{
+  "replace": false,
+  "values": [
+    "mymod:polished_slate"
+  ]
+}
+```
+
+`data/minecraft/tags/block/needs_stone_tool.json`:
+
+```json
+{
+  "replace": false,
+  "values": [
+    "mymod:polished_slate"
+  ]
+}
+```
+
+`assets/mymod/lang/en_us.json`:
+
+```json
+{
+  "block.mymod.polished_slate": "Polished Slate"
+}
+```
+
+## Items, Tools, Armor, And Food
+
+Simple and custom items receive an ID-bearing `Item.Properties` from the
+specialized register.
 
 ```java
-public static final DeferredBlock<SlabBlock> MY_SLAB =
-    BLOCKS.register("my_slab", () -> new SlabBlock(
-        BlockBehaviour.Properties.ofFullCopy(Blocks.STONE_SLAB)));
+public static final DeferredItem<Item> RAW_SHARD =
+    ITEMS.registerSimpleItem("raw_shard", properties -> properties.stacksTo(64));
+
+public static final DeferredItem<MagicWandItem> MAGIC_WAND =
+    ITEMS.registerItem("magic_wand", MagicWandItem::new,
+        properties -> properties.stacksTo(1).durability(256));
+
+public static final DeferredItem<Item> IRON_HAMMER =
+    ITEMS.registerItem("iron_hammer", properties ->
+        new Item(properties.pickaxe(ToolMaterial.IRON, 5.0F, -3.2F)));
+
+public static final DeferredItem<Item> IRON_CHESTPLATE =
+    ITEMS.registerItem("iron_chestplate", properties -> new Item(
+        properties.humanoidArmor(ArmorMaterials.IRON, ArmorType.CHESTPLATE)));
 ```
 
-```json
-// models/block/my_slab.json
-{
-  "parent": "minecraft:block/slab",
-  "textures": {
-    "bottom": "mymod:block/my_block",
-    "top": "mymod:block/my_block",
-    "side": "mymod:block/my_block"
-  }
-}
-
-// models/block/my_slab_top.json
-{
-  "parent": "minecraft:block/slab_top",
-  "textures": {
-    "bottom": "mymod:block/my_block",
-    "top": "mymod:block/my_block",
-    "side": "mymod:block/my_block"
-  }
-}
-
-// blockstates/my_slab.json
-{
-  "variants": {
-    "type=bottom": { "model": "mymod:block/my_slab" },
-    "type=top":    { "model": "mymod:block/my_slab_top" },
-    "type=double": { "model": "mymod:block/my_block" }
-  }
-}
-```
-
----
-
-### Stairs Block
+A food with an effect uses separate food and consumable components:
 
 ```java
-public static final DeferredBlock<StairBlock> MY_STAIRS =
-    BLOCKS.register("my_stairs", () -> new StairBlock(
-        ModBlocks.MY_BLOCK.get().defaultBlockState(),
-        BlockBehaviour.Properties.ofFullCopy(Blocks.STONE_STAIRS)));
+public static final DeferredItem<Item> GLOW_BERRY_TART =
+    ITEMS.registerItem("glow_berry_tart", properties -> {
+        FoodProperties food = new FoodProperties.Builder()
+            .nutrition(6)
+            .saturationModifier(0.8F)
+            .build();
+        Consumable consumable = Consumable.builder()
+            .onConsume(new ApplyStatusEffectsConsumeEffect(
+                new MobEffectInstance(MobEffects.NIGHT_VISION, 600, 0)))
+            .build();
+        return new Item(properties.food(food, consumable));
+    });
 ```
 
+Each item needs a client item definition and model. For a generated texture:
+
 ```json
-// models/block/my_stairs.json
 {
-  "parent": "minecraft:block/stairs",
-  "textures": {
-    "bottom": "mymod:block/my_block",
-    "top": "mymod:block/my_block",
-    "side": "mymod:block/my_block"
+  "model": {
+    "model": "mymod:item/raw_shard",
+    "type": "minecraft:model"
   }
 }
-// Also create: my_stairs_inner.json, my_stairs_outer.json (inherit from minecraft:block/inner_stairs / outer_stairs)
-```
-
----
-
-## Items
-
-### Food Item
-
-```java
-// NeoForge
-public static final DeferredItem<Item> MY_FOOD =
-    ITEMS.registerSimpleItem("my_food", new Item.Properties()
-        .food(new FoodProperties.Builder()
-            .nutrition(4)
-            .saturationModifier(0.3f)
-            .effect(new MobEffectInstance(MobEffects.REGENERATION, 200, 1), 0.8f)
-            .build()));
 ```
 
 ```json
-// models/item/my_food.json
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "mymod:item/my_food"
+    "layer0": "mymod:item/raw_shard"
   }
 }
 ```
 
-### Tool Item
+## Creative Tab Contents
 
 ```java
-// Custom sword  (NeoForge)
-public static final DeferredItem<SwordItem> MY_SWORD =
-    ITEMS.register("my_sword", () -> new SwordItem(
-        Tiers.DIAMOND,
-        new Item.Properties()
-            .attributes(SwordItem.createAttributes(Tiers.DIAMOND, 3, -2.4f))
-    ));
+@EventBusSubscriber(modid = MyMod.MOD_ID)
+public final class CreativeTabEvents {
+    @SubscribeEvent
+    public static void addCreativeTabItems(BuildCreativeModeTabContentsEvent event) {
+        if (event.getTabKey() == CreativeModeTabs.INGREDIENTS) {
+            event.accept(ModItems.RAW_SHARD);
+        }
+    }
+}
 ```
 
-### Armor Set
+## Entity Registration And Attributes
 
 ```java
-// Define armor material as a static constant (NeoForge 26.2):
-public static final ResourceKey<ArmorMaterial> MY_MATERIAL_KEY =
-    ResourceKey.create(Registries.ARMOR_MATERIAL,
-        ResourceLocation.fromNamespaceAndPath(MyMod.MOD_ID, "my_material"));
+public final class ModEntities {
+    public static final DeferredRegister.Entities ENTITY_TYPES =
+        DeferredRegister.createEntities(MyMod.MOD_ID);
 
-// Register items
-public static final DeferredItem<ArmorItem> MY_HELMET =
-    ITEMS.register("my_helmet", () -> new ArmorItem(
-        MY_MATERIAL_KEY, ArmorType.HELMET, new Item.Properties()));
-```
-
----
-
-## Entity Types
-
-```java
-// ModEntityTypes.java  (NeoForge)
-public class ModEntityTypes {
-    public static final DeferredRegister<EntityType<?>> ENTITY_TYPES =
-        DeferredRegister.create(BuiltInRegistries.ENTITY_TYPE, MyMod.MOD_ID);
-
-    public static final DeferredHolder<EntityType<?>, EntityType<MyEntity>> MY_ENTITY =
-        ENTITY_TYPES.register("my_entity",
-            () -> EntityType.Builder.<MyEntity>of(MyEntity::new, MobCategory.CREATURE)
-                .sized(0.9f, 1.3f)          // hitbox width, height
-                .clientTrackingRange(8)
+    public static final DeferredHolder<EntityType<?>, EntityType<SlateGolem>>
+        SLATE_GOLEM = ENTITY_TYPES.registerEntityType(
+            "slate_golem",
+            SlateGolem::new,
+            MobCategory.CREATURE,
+            builder -> builder.sized(1.2F, 2.7F)
+                .clientTrackingRange(10)
                 .updateInterval(3)
-                .build("my_entity"));
+        );
 }
 
-// MyEntity.java
-public class MyEntity extends Animal {
-    public MyEntity(EntityType<? extends MyEntity> type, Level level) {
-        super(type, level);
+@EventBusSubscriber(modid = MyMod.MOD_ID)
+public final class EntityEvents {
+    @SubscribeEvent
+    public static void createAttributes(EntityAttributeCreationEvent event) {
+        event.put(ModEntities.SLATE_GOLEM.get(), SlateGolem.createAttributes().build());
+    }
+}
+
+@EventBusSubscriber(modid = MyMod.MOD_ID, value = Dist.CLIENT)
+public final class EntityClientEvents {
+    @SubscribeEvent
+    public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
+        event.registerEntityRenderer(ModEntities.SLATE_GOLEM.get(), SlateGolemRenderer::new);
+    }
+}
+```
+
+Use an explicit spawn reason when creating an entity outside the constructor:
+
+```java
+SlateGolem golem = ModEntities.SLATE_GOLEM.get().create(
+    serverLevel,
+    EntitySpawnReason.COMMAND
+);
+```
+
+## Commands
+
+Permission predicates use named permission levels.
+
+```java
+@EventBusSubscriber(modid = MyMod.MOD_ID)
+public final class CommandEvents {
+    @SubscribeEvent
+    public static void registerCommands(RegisterCommandsEvent event) {
+        event.getDispatcher().register(Commands.literal("mymod")
+            .then(Commands.literal("reload")
+                .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                .executes(context -> {
+                    context.getSource().sendSuccess(
+                        () -> Component.literal("My Mod reloaded"), true);
+                    return Command.SINGLE_SUCCESS;
+                })));
+    }
+}
+```
+
+## Block Entity Persistence And Capability
+
+```java
+public final class StorageBlockEntity extends BlockEntity {
+    private final ItemStacksResourceHandler inventory =
+        new ItemStacksResourceHandler(9) {
+            @Override
+            protected void onContentsChanged(int index, ItemStack previousContents) {
+                setChanged();
+            }
+        };
+
+    public StorageBlockEntity(BlockPos pos, BlockState state) {
+        super(ModBlockEntities.STORAGE.get(), pos, state);
     }
 
-    public static AttributeSupplier.Builder createAttributes() {
-        return Animal.createMobAttributes()
-            .add(Attributes.MAX_HEALTH, 20.0)
-            .add(Attributes.MOVEMENT_SPEED, 0.25)
-            .add(Attributes.ATTACK_DAMAGE, 4.0);
+    public ResourceHandler<ItemResource> inventory() {
+        return inventory;
     }
 
     @Override
-    public @Nullable AgeableMob getBreedOffspring(ServerLevel level, AgeableMob mate) {
-        return ModEntityTypes.MY_ENTITY.get().create(level);
+    protected void saveAdditional(ValueOutput output) {
+        super.saveAdditional(output);
+        inventory.serialize(output.child("inventory"));
     }
-}
 
-// Register attributes on MOD bus:
-@SubscribeEvent
-public static void registerEntityAttributes(EntityAttributeCreationEvent event) {
-    event.put(ModEntityTypes.MY_ENTITY.get(), MyEntity.createAttributes().build());
+    @Override
+    protected void loadAdditional(ValueInput input) {
+        super.loadAdditional(input);
+        inventory.deserialize(input.childOrEmpty("inventory"));
+    }
 }
 ```
 
----
-
-## Commands (Brigadier)
+```java
+public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<StorageBlockEntity>>
+    STORAGE = BLOCK_ENTITY_TYPES.register("storage", () ->
+        new BlockEntityType<>(StorageBlockEntity::new, ModBlocks.STORAGE.get()));
+```
 
 ```java
-// NeoForge — register on GAME bus
-@EventBusSubscriber(modid = MyMod.MOD_ID, bus = Bus.GAME)
-public class ModCommands {
-    @SubscribeEvent
-    public static void onRegisterCommands(RegisterCommandsEvent event) {
-        registerCommands(event.getDispatcher());
-    }
-}
-
-// Shared implementation
-private static void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
-    dispatcher.register(
-        Commands.literal("mymod")
-            .then(Commands.literal("give")
-                .requires(src -> src.hasPermission(2))  // op level 2
-                .then(Commands.argument("player", EntityArgument.player())
-                    .then(Commands.argument("count", IntegerArgumentType.integer(1, 64))
-                        .executes(ctx -> executeGive(ctx,
-                            EntityArgument.getPlayer(ctx, "player"),
-                            IntegerArgumentType.getInteger(ctx, "count"))))))
+@SubscribeEvent
+public static void registerCapabilities(RegisterCapabilitiesEvent event) {
+    event.registerBlockEntity(
+        Capabilities.Item.BLOCK,
+        ModBlockEntities.STORAGE.get(),
+        (blockEntity, side) -> blockEntity.inventory()
     );
 }
-
-private static int executeGive(CommandContext<CommandSourceStack> ctx,
-        ServerPlayer player, int count) throws CommandSyntaxException {
-    ItemStack stack = new ItemStack(ModItems.MY_ITEM.get(), count);
-    player.getInventory().add(stack);
-    ctx.getSource().sendSuccess(
-        () -> Component.translatable("commands.mymod.give.success",
-            count, player.getDisplayName()),
-        true);
-    return count;
-}
 ```
 
----
+## Model Data Generation
 
-## Recipes (JSON)
-
-### Shaped Crafting Recipe
-
-```json
-// data/mymod/recipe/my_item.json
-{
-  "type": "minecraft:crafting_shaped",
-  "pattern": [
-    "SSS",
-    " I ",
-    " I "
-  ],
-  "key": {
-    "S": { "item": "minecraft:stone" },
-    "I": { "item": "minecraft:iron_ingot" }
-  },
-  "result": {
-    "id": "mymod:my_item",
-    "count": 1
-  }
-}
-```
-
-### Shapeless Recipe
-
-```json
-{
-  "type": "minecraft:crafting_shapeless",
-  "ingredients": [
-    { "item": "minecraft:diamond" },
-    { "item": "minecraft:emerald" }
-  ],
-  "result": {
-    "id": "mymod:my_item",
-    "count": 2
-  }
-}
-```
-
-### Smelting / Blasting / Smoking / Campfire
-
-```json
-{
-  "type": "minecraft:smelting",
-  "ingredient": { "item": "mymod:my_ore" },
-  "result": { "id": "mymod:my_ingot" },
-  "experience": 0.7,
-  "cookingtime": 200
-}
-```
-
-### Custom Recipe Type
+The 26.2 vanilla `ModelProvider` creates blockstate JSON, model JSON, and
+`assets/<namespace>/items` definitions together.
 
 ```java
-// Implement Recipe<RecipeInput> and register RecipeSerializer + RecipeType
-public class MyRecipe implements Recipe<SingleRecipeInput> {
-    // ...
-}
-```
-
----
-
-## Tags
-
-Tags group blocks/items for use in recipes and game logic.
-
-```json
-// data/mymod/tags/block/mineable/pickaxe.json  — mark my_block as pickaxe-mineable
-{
-  "replace": false,
-  "values": ["mymod:my_block"]
-}
-
-// data/mymod/tags/block/needs_iron_tool.json  — require iron tier
-{
-  "replace": false,
-  "values": ["mymod:my_block"]
-}
-
-// data/mymod/tags/item/my_material.json  — custom item tag
-{
-  "replace": false,
-  "values": ["mymod:my_ingot", "mymod:my_nugget"]
-}
-```
-
----
-
-## Data Generation (NeoForge)
-
-### BlockState Provider
-
-```java
-public class ModBlockStateProvider extends BlockStateProvider {
-    public ModBlockStateProvider(PackOutput output, ExistingFileHelper helper) {
-        super(output, MyMod.MOD_ID, helper);
+public final class ModModelProvider extends ModelProvider {
+    public ModModelProvider(PackOutput output, String modId) {
+        super(output, modId);
     }
 
     @Override
-    protected void registerStatesAndModels() {
-        simpleBlock(ModBlocks.MY_BLOCK.get());
-        simpleBlock(ModBlocks.SPECIAL_BLOCK.get(),
-            models().cubeAll("special_block", modLoc("block/special_block")));
-        // Slab:
-        slabBlock((SlabBlock) ModBlocks.MY_SLAB.get(),
-            modLoc("block/my_block"), modLoc("block/my_block"));
-        // Stairs:
-        stairsBlock((StairBlock) ModBlocks.MY_STAIRS.get(), modLoc("block/my_block"));
+    protected void registerModels(
+        BlockModelGenerators blockModels,
+        ItemModelGenerators itemModels
+    ) {
+        blockModels.createTrivialCube(ModBlocks.POLISHED_SLATE.get());
+        itemModels.generateFlatItem(ModItems.RAW_SHARD.get(), ModelTemplates.FLAT_ITEM);
     }
 }
 ```
 
-### Item Model Provider
+Register it only in the client data event:
 
 ```java
-public class ModItemModelProvider extends ItemModelProvider {
-    public ModItemModelProvider(PackOutput output, ExistingFileHelper helper) {
-        super(output, MyMod.MOD_ID, helper);
-    }
-
-    @Override
-    protected void registerModels() {
-        // BlockItem models derived from block models:
-        withExistingParent(ModItems.MY_BLOCK_ITEM.getId().getPath(),
-            modLoc("block/my_block"));
-
-        // Flat item (generated):
-        basicItem(ModItems.MY_ITEM.get());
-    }
+@SubscribeEvent
+public static void gatherClientData(GatherDataEvent.Client event) {
+    event.createProvider(output -> new ModModelProvider(output, MyMod.MOD_ID));
 }
 ```
 
-### Recipe Provider
+## Recipe Data Generation
+
+In 26.2, a concrete provider extends `RecipeProvider`, and a nested runner
+adapts it to `DataProvider`.
 
 ```java
-public class ModRecipeProvider extends RecipeProvider {
-    public ModRecipeProvider(PackOutput output,
-            CompletableFuture<HolderLookup.Provider> lookupProvider) {
-        super(output, lookupProvider);
+public final class ModRecipeProvider extends RecipeProvider {
+    private ModRecipeProvider(HolderLookup.Provider registries, RecipeOutput output) {
+        super(registries, output);
     }
 
     @Override
-    protected void buildRecipes(RecipeOutput output) {
-        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, ModItems.MY_BLOCK_ITEM.get(), 4)
+    protected void buildRecipes() {
+        shaped(RecipeCategory.BUILDING_BLOCKS, ModBlocks.POLISHED_SLATE.get(), 4)
+            .define('S', Blocks.STONE)
             .pattern("SS")
             .pattern("SS")
-            .define('S', Items.STONE)
-            .unlockedBy("has_stone", has(Items.STONE))
+            .unlockedBy("has_stone", has(Blocks.STONE))
             .save(output);
+    }
 
-        SimpleCookingRecipeBuilder.smelting(
-                Ingredient.of(Tags.Items.ORES_IRON),
-                RecipeCategory.MISC,
-                ModItems.MY_INGOT.get(),
-                0.7f, 200)
-            .unlockedBy("has_ore", has(Tags.Items.ORES_IRON))
-            .save(output, ResourceLocation.fromNamespaceAndPath(MyMod.MOD_ID, "my_ingot_smelting"));
+    public static final class Runner extends RecipeProvider.Runner {
+        public Runner(
+            PackOutput output,
+            CompletableFuture<HolderLookup.Provider> registries
+        ) {
+            super(output, registries);
+        }
+
+        @Override
+        protected RecipeProvider createRecipeProvider(
+            HolderLookup.Provider registries,
+            RecipeOutput output
+        ) {
+            return new ModRecipeProvider(registries, output);
+        }
+
+        @Override
+        public String getName() {
+            return "My Mod recipes";
+        }
     }
 }
 ```
 
-### Loot Table Provider
+Register it only in the server data event:
 
 ```java
-public class ModLootTableProvider extends LootTableProvider {
-    public ModLootTableProvider(PackOutput output,
-            CompletableFuture<HolderLookup.Provider> lookupProvider) {
-        super(output, Set.of(), List.of(
-            new SubProviderEntry(ModBlockLootTables::new, LootContextParamSets.BLOCK)
-        ), lookupProvider);
-    }
-
-    public static class ModBlockLootTables extends BlockLootSubProvider {
-        protected ModBlockLootTables(HolderLookup.Provider registries) {
-            super(Set.of(), FeatureFlags.REGISTRY.allFlags(), registries);
-        }
-
-        @Override
-        protected void generate() {
-            dropSelf(ModBlocks.MY_BLOCK.get());
-
-            // Drop ore with fortune/silk-touch handling:
-            add(ModBlocks.MY_ORE.get(),
-                createOreDrop(ModBlocks.MY_ORE.get(), ModItems.MY_GEM.get()));
-        }
-
-        @Override
-        protected Iterable<Block> getKnownBlocks() {
-            return ModBlocks.BLOCKS.getEntries().stream()
-                .map(DeferredHolder::get)::iterator;
-        }
-    }
+@SubscribeEvent
+public static void gatherServerData(GatherDataEvent.Server event) {
+    event.createProvider(ModRecipeProvider.Runner::new);
 }
 ```
 
----
+## Recipe Ingredient Forms
 
-## Language File (en_us.json)
+Minecraft 26.2 accepts item IDs, tag IDs, or lists directly. Do not wrap a
+basic ingredient in an `item` object.
+
+Single item:
 
 ```json
-{
-  "block.mymod.my_block": "My Block",
-  "item.mymod.my_item": "My Item",
-  "item.mymod.my_food": "My Food",
-  "entity.mymod.my_entity": "My Entity",
-  "container.mymod.my_container": "My Container",
-  "itemGroup.mymod.main_tab": "My Mod",
-  "commands.mymod.give.success": "Gave %s x%s My Item"
-}
+"minecraft:iron_ingot"
 ```
 
----
+Tag:
 
-## GitHub Actions CI Workflow
-
-```yaml
-# .github/workflows/build.yml
-name: Build
-
-on:
-  push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main]
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4
-        with:
-          java-version: '25'
-          distribution: 'microsoft'
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@0b6dd653ba04f4f93bf581ec31e66cbd7dcb644d # v4
-      - name: Build with Gradle
-        run: ./gradlew build
-      - name: Run Game Tests
-        run: ./gradlew runGameTestServer
-      - name: Upload Build Artifacts
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        with:
-          name: mod-jar
-          path: build/libs/*.jar
-          if-no-files-found: error
+```json
+"#minecraft:planks"
 ```
 
----
+Alternatives:
 
-## Modrinth / CurseForge Publishing
-
-```groovy
-// build.gradle — Modrinth via Minotaur plugin
-modrinth {
-    token = System.getenv("MODRINTH_TOKEN")
-    projectId = "your-project-id"
-    versionNumber = project.mod_version
-    versionType = "release"
-    uploadFile = jar
-    gameVersions = ["26.2"]
-    loaders = ["neoforge"]
-    changelog = rootProject.file("CHANGELOG.md").text
-    syncBodyFrom = rootProject.file("README.md").text
-}
+```json
+[
+  "minecraft:coal",
+  "minecraft:charcoal"
+]
 ```
 
-```groovy
-// Alternatively, use the official CurseForge Gradle plugin
-curseforge {
-    apiKey = System.getenv("CURSEFORGE_TOKEN")
-    project {
-        id = "000000"
-        changelogType = "markdown"
-        changelog = file("CHANGELOG.md")
-        releaseType = "release"
-        addGameVersion "26.2"
-        addGameVersion "NeoForge"
-        mainArtifact jar
-    }
-}
-```
+## Resource Review Checklist
+
+- Every registered item has `assets/<modid>/items/<id>.json`.
+- Every item definition points to an existing item model.
+- Every referenced model texture exists under `textures/`.
+- Every non-air block has a blockstate and expected loot table.
+- Recipe ingredients use the 26.2 scalar/list form.
+- Tags use singular registry directories such as `tags/block` and `tags/item`.
+- JSON is valid and formatted with two spaces.
+- Datagen output is reviewed and committed rather than accepted blindly.

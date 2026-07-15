@@ -134,6 +134,10 @@ function evaluateFilter(input, filter) {
       return Array.isArray(input?.providers) ? input.providers.map((entry) => entry?.file).filter(present) : [];
     case ".type?//empty":
       return present(input?.type) ? [input.type] : [];
+    case ".default_clock?//empty":
+      return present(input?.default_clock) ? [input.default_clock] : [];
+    case ".clock?//empty":
+      return present(input?.clock) ? [input.clock] : [];
     case "if(.generator?.type?//empty)==\"minecraft:noise\"and(.generator?.settings?|type)==\"string\"then.generator.settingselseemptyend": {
       if (!isObject(input?.generator)) return [];
       return input.generator.type === "minecraft:noise" && typeof input.generator.settings === "string"
@@ -154,6 +158,8 @@ function evaluateFilter(input, filter) {
       return flattenOptionalField(input, "features");
     case "(.structures?//empty)|iftype==\"array\"then.[]else.end":
       return flattenOptionalField(input, "structures");
+    case "(.timelines?//empty)|iftype==\"array\"then.[]else.end":
+      return flattenOptionalField(input, "timelines");
     default:
       throw new Error(`unsupported jq filter: ${filter}`);
   }

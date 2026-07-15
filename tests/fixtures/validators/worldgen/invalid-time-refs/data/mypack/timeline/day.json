@@ -1,0 +1,5 @@
+{
+  "clock": "mypack:missing_clock",
+  "period_ticks": 24000,
+  "tracks": {}
+}

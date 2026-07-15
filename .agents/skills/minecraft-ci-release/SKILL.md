@@ -1,48 +1,73 @@
 ---
 name: minecraft-ci-release
-description: "Set up CI/CD pipelines, automated publishing, and release workflows for Minecraft mods and plugins for 26.2. Covers GitHub Actions matrix builds for NeoForge, automated publishing to Modrinth (via minotaur Gradle plugin) and CurseForge (via curseforgegradle), GitHub Releases with JAR artifacts, semantic versioning conventions for Minecraft mods, CHANGELOG generation, Dependabot for Gradle wrapper and plugin updates, build caching with gradle/actions/setup-gradle, pull request checks, and release tag workflows. Also covers Paper plugin CI with shadow JAR builds. Use when the task is CI/CD pipelines, release automation, artifact publishing, versioning, or release governance for Minecraft mods or plugins."
+description: "Build, test, publish, and govern Minecraft 26.2 NeoForge releases with GitHub Actions, Java 25, Modrinth, CurseForge, GitHub Releases, version checks, dependency updates, and pinned workflow actions."
 ---
 
-# Minecraft CI / Release Skill
+# Minecraft CI And Release Skill
 
-## Workflow Overview
-
-```
-PR opened → build + test checks
-main branch push → build artifacts
-Tag push (v*) → build + publish to Modrinth + CurseForge + GitHub Releases
-```
+Use this skill after the downstream project can build and test locally. The
+canonical NeoForge 26.2 artifact is a normal `jar` task output. Fabric Loom's
+remapped artifact is platform-specific and must not be used for NeoForge.
 
 ### Routing Boundaries
-- `Use when`: the task is CI/CD pipelines, release automation, artifact publishing, versioning, or release governance.
-- `Do not use when`: the task is implementing gameplay features (`minecraft-modding`) or writing test logic (`minecraft-testing`).
-- `Do not use when`: the task does not change build, release, publishing, or repository governance behavior.
 
----
+- `Use when`: the task is CI, release automation, artifact publishing,
+  versioning, dependency updates, branch protection, or release governance.
+- `Do not use when`: the task is gameplay code or test implementation; use
+  `minecraft-modding` or `minecraft-testing`.
+- `Do not use when`: the task does not change build, publishing, or repository
+  governance behavior.
 
-## Versioning Convention
+## Version And Platform Gate
 
-Minecraft mod versions follow: `{mod_version}+{mc_version}`
+Before editing automation, inspect the actual project:
 
+```bash
+rg -n "minecraft_version|neo_version|mod_version|moddev|loom|paper" \
+  gradle.properties build.gradle build.gradle.kts settings.gradle settings.gradle.kts
+./gradlew tasks --all
 ```
-1.0.0+26.2  <- mod 1.0.0 for MC 26.2
+
+For NeoForge 26.2:
+
+- use Java 25;
+- run the project's Gradle wrapper;
+- build with `build`;
+- run registered GameTests with `runGameTestServer`;
+- publish `tasks.named("jar")` or `tasks.named<Jar>("jar")`;
+- declare the platform loader as `neoforge`/`NeoForge` on publishing services.
+
+Verify exact task names when the downstream project has custom packaging or a
+multi-project layout.
+
+## Version Convention
+
+Use `{mod_version}+{mc_version}` as the release version:
+
+```text
+1.0.0+26.2
 1.2.3+26.2
-2.0.0+26.2
+2.0.0-beta.1+26.2
 ```
 
-Git tag format: `v1.0.0` (mod version only, not MC version in the tag).
+Use the exact project version in the Git tag:
 
----
+```text
+v1.2.3+26.2
+```
 
-## Core CI Workflow (NeoForge + Fabric)
+This exact match makes release validation unambiguous.
 
-### `.github/workflows/build.yml`
+## NeoForge Pull Request CI
+
+`.github/workflows/neoforge-ci.yml`:
+
 ```yaml
-name: Build
+name: NeoForge CI
 
 on:
   push:
-    branches: ["main", "develop"]
+    branches: ["main"]
   pull_request:
     branches: ["main"]
 
@@ -51,13 +76,8 @@ permissions:
 
 jobs:
   build:
-    name: Build (${{ matrix.platform }})
+    name: NeoForge build
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        platform: [neoforge, fabric]
-      fail-fast: false
-
     steps:
       - name: Checkout
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
@@ -65,33 +85,61 @@ jobs:
       - name: Set up Java 25
         uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4
         with:
+          distribution: temurin
           java-version: "25"
-          distribution: "temurin"
 
-      - name: Setup Gradle
+      - name: Set up Gradle
         uses: gradle/actions/setup-gradle@0b6dd653ba04f4f93bf581ec31e66cbd7dcb644d # v4
         with:
-          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
+          cache-read-only: ${{ github.event_name == 'pull_request' }}
 
-      - name: Grant execute permission for gradlew
+      - name: Make Gradle wrapper executable
         run: chmod +x gradlew
 
-      - name: Build (${{ matrix.platform }})
-        run: ./gradlew :${{ matrix.platform }}:build --no-daemon
+      - name: Build
+        run: ./gradlew build --no-daemon
 
-      - name: Upload artifacts
+      - name: Upload NeoForge JARs
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: mod-${{ matrix.platform }}-${{ github.sha }}
-          path: ${{ matrix.platform }}/build/libs/*.jar
           if-no-files-found: error
+          name: neoforge-${{ github.sha }}
+          path: build/libs/*.jar
+
+  gametest:
+    name: NeoForge GameTests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Set up Java 25
+        uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4
+        with:
+          distribution: temurin
+          java-version: "25"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@0b6dd653ba04f4f93bf581ec31e66cbd7dcb644d # v4
+        with:
+          cache-read-only: ${{ github.event_name == 'pull_request' }}
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x gradlew
+
+      - name: Run headless GameTests
+        run: ./gradlew runGameTestServer --no-daemon
 ```
 
----
+If GameTests are intentionally absent, remove the job and do not configure a
+required check that can never pass.
 
-## Release Workflow (with Publishing)
+## NeoForge Release Workflow
 
-### `.github/workflows/release.yml`
+This workflow validates the tag before building or publishing.
+
+`.github/workflows/release.yml`:
+
 ```yaml
 name: Release
 
@@ -101,13 +149,12 @@ on:
       - "v*"
 
 permissions:
-  contents: write      # for creating GitHub releases
+  contents: write
 
 jobs:
   release:
-    name: Release
+    name: NeoForge release
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
@@ -115,323 +162,274 @@ jobs:
       - name: Set up Java 25
         uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4
         with:
+          distribution: temurin
           java-version: "25"
-          distribution: "temurin"
 
-      - name: Setup Gradle
+      - name: Set up Gradle
         uses: gradle/actions/setup-gradle@0b6dd653ba04f4f93bf581ec31e66cbd7dcb644d # v4
 
-      - name: Grant execute permission for gradlew
+      - name: Make Gradle wrapper executable
         run: chmod +x gradlew
 
-      - name: Extract version from tag
-        id: version
-        run: echo "MOD_VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
+      - name: Validate release tag
+        shell: bash
+        run: |
+          set -euo pipefail
+          project_version="$(awk -F= '$1 == "mod_version" { print substr($0, index($0, "=") + 1); exit }' gradle.properties)"
+          if [[ -z "$project_version" ]]; then
+            echo "mod_version is missing from gradle.properties" >&2
+            exit 1
+          fi
+          expected_tag="v${project_version}"
+          if [[ "$GITHUB_REF_NAME" != "$expected_tag" ]]; then
+            echo "tag $GITHUB_REF_NAME does not match $expected_tag" >&2
+            exit 1
+          fi
 
-      - name: Build all platforms
-        run: ./gradlew build --no-daemon
+      - name: Build and test
+        run: ./gradlew build runGameTestServer --no-daemon
 
-      - name: Publish to Modrinth & CurseForge
-        run: ./gradlew publishMods --no-daemon
+      - name: Publish to Modrinth and CurseForge
+        run: ./gradlew modrinth curseforge --no-daemon
         env:
-          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
           CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
+          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
 
-      - name: Create GitHub Release
+      - name: Create GitHub release
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
-          files: |
-            fabric/build/libs/*.jar
-            neoforge/build/libs/*.jar
-          generate_release_notes: true
           draft: false
+          files: build/libs/*.jar
+          generate_release_notes: true
           prerelease: ${{ contains(github.ref_name, '-alpha') || contains(github.ref_name, '-beta') || contains(github.ref_name, '-rc') }}
 ```
 
----
+For a multi-project repository, qualify Gradle tasks and artifact paths with
+the NeoForge subproject, then keep those exact paths consistent in every step.
 
-## Paper Plugin CI
+## NeoForge Modrinth Publishing
 
-### `.github/workflows/build.yml` (plugin)
-```yaml
-name: Build
+`build.gradle.kts`:
 
-on:
-  push:
-    branches: ["main"]
-  pull_request:
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4
-        with:
-          java-version: "25"
-          distribution: "temurin"
-      - uses: gradle/actions/setup-gradle@0b6dd653ba04f4f93bf581ec31e66cbd7dcb644d # v4
-      - run: chmod +x gradlew
-      - run: ./gradlew shadowJar --no-daemon
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        with:
-          name: plugin-${{ github.sha }}
-          path: build/libs/*.jar
-
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4
-        with:
-          java-version: "25"
-          distribution: "temurin"
-      - uses: gradle/actions/setup-gradle@0b6dd653ba04f4f93bf581ec31e66cbd7dcb644d # v4
-      - run: ./gradlew test --no-daemon
-```
-
----
-
-## Modrinth Publishing (minotaur)
-
-### `build.gradle.kts` (root or platform-specific)
 ```kotlin
+import org.gradle.jvm.tasks.Jar
+
 plugins {
     id("com.modrinth.minotaur") version "2.8.7"
 }
 
-// === Fabric subproject ===
 modrinth {
     token.set(System.getenv("MODRINTH_TOKEN") ?: "")
-    projectId.set("YOUR-PROJECT-ID")    // from modrinth.com project slug or ID
-
-    versionNumber.set("${project.version}")
-    versionType.set("release")          // release | beta | alpha
-
-    uploadFile.set(tasks.remapJar)      // the JAR to upload
-
-    gameVersions.addAll("26.2")
-    loaders.addAll("fabric")
-
-    changelog.set(
-        rootProject.file("CHANGELOG.md").readText()
-            .substringAfter("## [${project.version}]")
-            .substringBefore("\n## [")
-            .trim()
-    )
-
-    dependencies {
-        required.project("fabric-api")
-        // optional.project("some-optional-mod")
-    }
+    projectId.set(providers.gradleProperty("modrinth_project_id"))
+    versionNumber.set(project.version.toString())
+    versionType.set("release")
+    uploadFile.set(tasks.named<Jar>("jar"))
+    gameVersions.add("26.2")
+    loaders.add("neoforge")
+    changelog.set(file("CHANGELOG.md").readText())
 }
 ```
 
-### Combined Fabric + NeoForge publish task (root-level)
+If the project produces sources or API JARs, add them intentionally as
+additional files. Do not upload every file in `build/libs` without classifying
+it.
+
+## NeoForge CurseForge Publishing
+
+`build.gradle.kts`:
+
 ```kotlin
-// root build.gradle.kts
-tasks.register("publishMods") {
-    dependsOn(":fabric:modrinth", ":neoforge:modrinth")
-    dependsOn(":fabric:curseforge", ":neoforge:curseforge")
-    group = "publishing"
-    description = "Publish all platforms to Modrinth and CurseForge"
-}
-```
+import net.darkhax.curseforgegradle.TaskPublishCurseForge
+import org.gradle.jvm.tasks.Jar
 
----
-
-## CurseForge Publishing
-
-### `build.gradle.kts`
-```kotlin
 plugins {
     id("net.darkhax.curseforgegradle") version "1.1.25"
 }
 
-tasks.register<net.darkhax.curseforgegradle.TaskPublishCurseForge>("curseforge") {
+tasks.register<TaskPublishCurseForge>("curseforge") {
     apiToken = System.getenv("CURSEFORGE_TOKEN") ?: ""
 
-    val cf = upload(PROJECT_ID, tasks.named("remapJar"))  // or shadowJar
-    cf.changelogType = "markdown"
-    cf.changelog = rootProject.file("CHANGELOG.md").readText()
-        .substringAfter("## [${project.version}]")
-        .substringBefore("\n## [")
-        .trim()
-
-    cf.releaseType = "release"
-    cf.addGameVersion("26.2")
-    cf.addModLoader("Fabric")     // "NeoForge" for NeoForge subproject
-    cf.addRequirement("fabric-api")
-    // cf.addJavaVersion("Java 25")
-
-    // Replace PROJECT_ID with your numeric CurseForge project ID
+    val mainFile = upload(
+        providers.gradleProperty("curseforge_project_id").get().toInt(),
+        tasks.named<Jar>("jar")
+    )
+    mainFile.changelogType = "markdown"
+    mainFile.changelog = file("CHANGELOG.md").readText()
+    mainFile.releaseType = "release"
+    mainFile.addGameVersion("26.2")
+    mainFile.addModLoader("NeoForge")
 }
 ```
 
-> Replace `PROJECT_ID` with your actual numeric CurseForge project ID (found in project settings).
+Plugin DSLs evolve independently of Minecraft. Confirm the configured plugin
+version and task types in the downstream Gradle model before changing a
+working publishing block.
 
----
+## Fabric Is A Separate Artifact Path
 
-## `gradle.properties` Secrets Pattern
+Only a Fabric Loom subproject should publish its remapped output:
 
-Never hardcode tokens. Read them from environment:
+```kotlin
+// fabric/build.gradle.kts
+modrinth {
+    uploadFile.set(tasks.named("remapJar"))
+    gameVersions.add("26.2")
+    loaders.add("fabric")
+}
+```
+
+Do not copy this task into a NeoForge project. In a multiloader build, configure
+separate Modrinth and CurseForge tasks per loader and give each upload a unique
+version/file identity.
+
+## Secrets
+
+Configure these as repository or environment secrets, never in committed
+Gradle properties:
+
+- `MODRINTH_TOKEN`
+- `CURSEFORGE_TOKEN`
+
+Commit only public project IDs:
 
 ```properties
-# gradle.properties (committed)
-mod_id=mymod
-mod_version=1.0.0
+mod_version=1.0.0+26.2
 minecraft_version=26.2
-modrinth_project_id=AABBCCDD
+modrinth_project_id=A1B2C3D4
 curseforge_project_id=123456
-
-# DO NOT commit tokens
-# Set these as GitHub repo secrets:
-# MODRINTH_TOKEN, CURSEFORGE_TOKEN
 ```
 
----
+Use a protected GitHub environment with required reviewers when releases need
+manual approval.
 
-## Semantic Versioning for Mods
+## Portable Release Script
 
-| Change | Version bump |
-|--------|-------------|
-| New features, no breaking changes | Minor: `1.1.0` |
-| Bug fixes only | Patch: `1.0.1` |
-| API/config breaking changes | Major: `2.0.0` |
-| Minecraft version update | Keep mod version, change the `+26.2` suffix |
-| Pre-release | `1.0.0-beta.1`, `1.0.0-rc.1` |
-
----
-
-## CHANGELOG.md Convention
-
-```markdown
-# Changelog
-
-## [1.1.0] — 2025-06-01
-### Added
-- New `/kit` command
-- PDC-based kill tracker
-
-### Fixed
-- Death message not appearing on Paper 26.2
-
-## [1.0.0] — 2025-05-01
-### Added
-- Initial release
-```
-
-Automate CHANGELOG parsing in Gradle (as shown above in modrinth block) by extracting
-the section between version headers.
-
----
-
-## Dependabot Configuration
-
-### `.github/dependabot.yml`
-```yaml
-version: 2
-updates:
-  - package-ecosystem: "gradle"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-    groups:
-      gradle-plugins:
-        patterns:
-          - "com.gradleup.shadow"
-          - "dev.architectury.loom"
-          - "com.modrinth.minotaur"
-          - "net.darkhax.curseforgegradle"
-
-  - package-ecosystem: "github-actions"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-```
-
----
-
-## Build Caching Best Practices
-
-```yaml
-# In all workflow jobs:
-- name: Setup Gradle
-  uses: gradle/actions/setup-gradle@0b6dd653ba04f4f93bf581ec31e66cbd7dcb644d # v4
-  with:
-    # Read-only cache on PRs, read-write on main
-    cache-read-only: ${{ github.event_name == 'pull_request' }}
-    # Cache Minecraft assets (speeds up loom tasks by minutes)
-    gradle-home-cache-includes: |
-      caches
-      notifications
-      .gradle/loom-cache
-```
-
----
-
-## Branch Protection + Required Checks
-
-Recommended GitHub branch protection for `main`:
-- Require status checks: `build (fabric)`, `build (neoforge)`, `test`
-- Require linear history (squash/rebase merges)
-- Require signed commits (optional but recommended for release workflows)
-
----
-
-## Tag and Release Script
+This script updates `mod_version` without relying on GNU-specific in-place
+editing. It creates a local commit and tag but does not push them.
 
 ```bash
 #!/usr/bin/env bash
-# scripts/release.sh <version>
-# Usage: ./scripts/release.sh 1.1.0
 set -euo pipefail
 
-VERSION="${1:?Usage: release.sh <version>}"
+VERSION="${1:?Usage: release.sh <version+mc-version>}"
+if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?\+26\.2$ ]]; then
+  echo "invalid 26.2 release version: $VERSION" >&2
+  exit 2
+fi
 
-# Update gradle.properties
-sed -i "s/^mod_version=.*/mod_version=${VERSION}/" gradle.properties
+temporary_file="$(mktemp)"
+trap 'rm -f "$temporary_file"' EXIT
 
-# Stage and commit
+awk -v version="$VERSION" '
+  BEGIN { updated = 0 }
+  /^mod_version=/ {
+    print "mod_version=" version
+    updated = 1
+    next
+  }
+  { print }
+  END { if (!updated) exit 3 }
+' gradle.properties > "$temporary_file"
+
+mv "$temporary_file" gradle.properties
+trap - EXIT
+
 git add gradle.properties
 git commit -m "chore: release v${VERSION}"
-
-# Tag
 git tag "v${VERSION}"
 
-echo "Created commit and tag v${VERSION}"
-echo "Push with: git push && git push --tags"
+echo "created v${VERSION}; review the commit before pushing"
 ```
+
+## Branch Protection
+
+For the workflow above, require these exact check names on `main`:
+
+- `NeoForge build`
+- `NeoForge GameTests`
+
+GitHub displays the job's `name`, not the YAML job key. Update branch
+protection whenever a job name changes. Also require review and prevent direct
+force-pushes to the release branch.
+
+## Gradle Cache Guidance
+
+`gradle/actions/setup-gradle` already manages Gradle user-home caching. A
+NeoForge-only workflow does not need a Loom cache path.
+
+```yaml
+- name: Set up Gradle
+  uses: gradle/actions/setup-gradle@0b6dd653ba04f4f93bf581ec31e66cbd7dcb644d # v4
+  with:
+    cache-read-only: ${{ github.event_name == 'pull_request' }}
+```
+
+Do not combine `actions/cache` over the same Gradle directories unless there is
+a measured gap that `setup-gradle` cannot cover.
+
+## Dependabot
+
+`.github/dependabot.yml`:
+
+```yaml
+version: 2
+updates:
+  - package-ecosystem: gradle
+    directory: "/"
+    schedule:
+      interval: weekly
+    groups:
+      gradle-plugins:
+        patterns:
+          - "net.neoforged.moddev"
+          - "com.modrinth.minotaur"
+          - "net.darkhax.curseforgegradle"
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+```
+
+Review NeoForge and ModDevGradle updates together with their Minecraft and Java
+requirements. Dependency automation should open a pull request, not publish a
+release.
+
+## Paper Plugin Boundary
+
+Paper is not NeoForge. For a Paper project, confirm its own Minecraft and Java
+baseline, use its `shadowJar`/`test` tasks, and publish the shaded plugin rather
+than a NeoForge mod JAR. Do not share loader declarations or GameTest tasks
+between these platforms.
 
 ## Workflow Snippet Validator
 
-Use the bundled validator script to keep `SKILL.md` workflow snippets copy-paste safe:
+Run the bundled, self-contained validator from the installed skill directory:
 
 ```bash
-# Run from the installed skill directory:
 ./scripts/validate-workflow-snippets.sh --root .
-
-# Strict mode treats warnings as failures:
 ./scripts/validate-workflow-snippets.sh --root . --strict
 ```
 
-The validator is bundled and self-contained. Run it from a copied `.agents/`,
-`.codex/`, or `.claude/` `minecraft-ci-release` skill directory without relying
-on repo-root `node_modules`.
+It validates YAML syntax, workflow top-level keys, full action commit pins,
+container digests, placeholders, globs, and documented secret usage.
 
-What it checks:
-- YAML snippet structure for workflow-like blocks (`name`, `on`, `jobs`)
-- Full commit-SHA pins for actions and SHA-256 digest pins for container actions
-- Unresolved placeholder tokens and suspicious glob patterns
-- `${{ secrets.* }}` usage stays consistent with secrets documented in this file
+## Release Checklist
 
----
+- `mod_version` exactly matches the tag without its leading `v`.
+- Minecraft is `26.2`, Java is `25`, and the resolved NeoForge version is
+  intentional.
+- Unit tests, `build`, and `runGameTestServer` pass.
+- The changelog contains the release version.
+- NeoForge publishing uses `jar` and loader `neoforge`/`NeoForge`.
+- Tokens are scoped secrets and logs do not print them.
+- GitHub artifacts and release files point to the same built JAR family.
+- Required branch checks match job display names.
 
 ## References
 
 - GitHub Actions: https://docs.github.com/en/actions
-- minotaur (Modrinth): https://github.com/modrinth/minotaur
-- curseforgegradle: https://github.com/Darkhax-Minecraft/CurseForgeGradle
-- softprops/action-gh-release: https://github.com/softprops/action-gh-release
-- gradle/actions: https://github.com/gradle/actions
-- Modrinth API docs: https://docs.modrinth.com/
+- Gradle Actions: https://github.com/gradle/actions
+- Modrinth Minotaur: https://github.com/modrinth/minotaur
+- CurseForgeGradle: https://github.com/Darkhax-Minecraft/CurseForgeGradle
+- GitHub release action: https://github.com/softprops/action-gh-release

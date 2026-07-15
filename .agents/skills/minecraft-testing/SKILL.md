@@ -1,45 +1,58 @@
 ---
 name: minecraft-testing
-description: "Write automated tests for Minecraft 26.2 NeoForge mods. Covers JUnit 5 unit tests for non-Minecraft logic, NeoForge GameTests with GameTestHelper assertions, committed structure templates, event-bus registration, layout validation, and headless test execution. Use when Codex needs to design tests, add JUnit or NeoForge GameTests, validate test project structure, or diagnose missing GameTest templates and registration."
+description: "Test Minecraft 26.2 NeoForge mods with JUnit 5 and registry-based GameTests, including structure fixtures, test instances, environments, Java handlers, layout validation, and headless execution."
 ---
 
 # Minecraft Testing Skill
 
-Use plain JUnit for isolated logic and NeoForge GameTests when behavior requires
-registries, blocks, entities, or a running game test environment.
+Use JUnit for isolated logic and NeoForge GameTests for behavior that needs a
+loaded registry, server level, block, entity, capability, or structure.
 
 | Approach | Best for | Starts Minecraft |
 |---|---|---|
-| JUnit 5 | Parsing, state machines, cooldowns, serialization | No |
-| NeoForge GameTests | Block, entity, registry, and world interaction | Yes |
+| JUnit 5 | Parsers, state machines, cooldowns, deterministic services | No |
+| NeoForge GameTests | World interaction and registry-backed behavior | Yes |
 
 ### Routing Boundaries
-- `Use when`: the task is designing, implementing, or validating automated tests for a NeoForge mod.
-- `Do not use when`: the task is implementing gameplay behavior rather than testing it (`minecraft-modding`).
-- `Do not use when`: the task is release publishing or general CI governance (`minecraft-ci-release`).
+
+- `Use when`: the task is designing, implementing, diagnosing, or validating
+  tests for a NeoForge 26.2 mod.
+- `Do not use when`: the task is gameplay implementation rather than its tests;
+  use `minecraft-modding`.
+- `Do not use when`: the task is release publishing or CI governance; use
+  `minecraft-ci-release` after test commands are known.
+
+## 26.2 Compatibility Rule
+
+Minecraft 26.2 does not use annotation-scanned GameTest methods. GameTests are
+entries in `Registries.TEST_INSTANCE`; environments are entries in
+`Registries.TEST_ENVIRONMENT`. NeoForge exposes `RegisterGameTestsEvent` on the
+mod bus for programmatic registration.
+
+Reject examples that import old GameTest annotations or register a test class
+for annotation scanning. They target an earlier API generation.
 
 ## Bundled Resources
 
-- Read `references/test-layouts.md` when choosing source and resource paths.
-- Run `./scripts/validate-test-layout.sh --root <project>` before copying a test
-  layout into a downstream project.
-- Use `--strict` when warnings must fail a CI job.
+- Read `references/test-layouts.md` for complete source/resource layouts.
+- Run `./scripts/validate-test-layout.sh --root <project>` for structural
+  preflight.
+- Add `--strict` when warnings must fail CI.
 
-The validator checks build/test roots, JUnit Platform configuration, literal
-GameTest template paths, NeoForge metadata, and GameTest class registration. It
-does not compile the downstream project or replace `runGameTestServer`.
+The validator parses `test_instance` JSON, resolves local structure templates,
+checks NeoForge metadata and Java event registration, and rejects removed API
+surfaces. It does not compile or launch the downstream project.
 
 ## JUnit 5
 
-Keep logic that does not require Minecraft classes in ordinary unit-testable
-types. Inject time, randomness, and filesystem access instead of sleeping or
-mutating global state.
+Keep logic that does not require Minecraft classes in ordinary Java types.
+Inject clocks, randomness, storage, and external services.
 
-### Gradle configuration
+`build.gradle.kts`:
 
 ```kotlin
 dependencies {
-    testImplementation("org.junit.jupiter:junit-jupiter:5.11.0")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.11.4")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
@@ -51,8 +64,6 @@ tasks.test {
 }
 ```
 
-### Unit-test pattern
-
 ```java
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -63,10 +74,13 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import org.junit.jupiter.api.Test;
 
-class CooldownManagerTest {
+final class CooldownManagerTest {
     @Test
     void expiresAtConfiguredDeadline() {
-        Clock clock = Clock.fixed(Instant.parse("2026-07-15T00:00:00Z"), ZoneOffset.UTC);
+        Clock clock = Clock.fixed(
+            Instant.parse("2026-07-15T00:00:00Z"),
+            ZoneOffset.UTC
+        );
         CooldownManager manager = new CooldownManager(Duration.ofSeconds(5), clock);
 
         manager.start("player-id");
@@ -77,39 +91,150 @@ class CooldownManagerTest {
 }
 ```
 
-## NeoForge GameTests
+## Data-Driven GameTest
 
-GameTests place a committed structure template, execute server-side test code,
-and finish only when `GameTestHelper.succeed()` is called or an assertion fails.
+The smallest 26.2 GameTest uses a committed structure and a test instance
+resource. This example validates the GameTest layout itself with Minecraft's
+built-in always-pass function.
 
-### Register the test class
+`src/main/resources/data/mymod/test_instance/layout_smoke.json`:
+
+```json
+{
+  "environment": "minecraft:default",
+  "function": "minecraft:always_pass",
+  "max_ticks": 1,
+  "required": false,
+  "setup_ticks": 1,
+  "structure": "mymod:empty",
+  "type": "minecraft:function"
+}
+```
+
+Commit the binary template at:
+
+```text
+src/main/resources/data/mymod/structure/empty.nbt
+```
+
+An optional custom environment lives at
+`data/mymod/test_environment/default.json`:
+
+```json
+{
+  "definitions": [],
+  "type": "minecraft:all_of"
+}
+```
+
+Then change the instance's environment to `mymod:default`.
+
+## Java-Backed GameTest
+
+For direct Java assertions, register a serializable instance type once, then
+register each test through `RegisterGameTestsEvent`.
+
+The mod entry point attaches the custom instance codec registry:
 
 ```java
 @Mod(MyMod.MOD_ID)
 public final class MyMod {
     public static final String MOD_ID = "mymod";
 
-    public MyMod(IEventBus modEventBus) {
-        modEventBus.register(MyGameTests.class);
+    public MyMod(IEventBus modBus) {
+        ModGameTestTypes.TEST_INSTANCE_TYPES.register(modBus);
     }
 }
 ```
 
-### Define a GameTest
+The instance codec stores common test data plus a handler ID:
 
 ```java
-import net.minecraft.core.BlockPos;
-import net.minecraft.gametest.framework.GameTest;
-import net.minecraft.gametest.framework.GameTestHelper;
-import net.minecraft.world.level.block.Blocks;
-import net.neoforged.neoforge.gametest.GameTestHolder;
-import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+public final class JavaGameTestInstance extends GameTestInstance {
+    public static final MapCodec<JavaGameTestInstance> CODEC =
+        RecordCodecBuilder.mapCodec(instance -> instance.group(
+            TestData.CODEC.forGetter(JavaGameTestInstance::testData),
+            Identifier.CODEC.fieldOf("test").forGetter(JavaGameTestInstance::testId)
+        ).apply(instance, JavaGameTestInstance::new));
 
-@GameTestHolder("mymod")
-@PrefixGameTestTemplate(false)
+    private final Identifier testId;
+
+    public JavaGameTestInstance(
+        TestData<Holder<TestEnvironmentDefinition<?>>> data,
+        Identifier testId
+    ) {
+        super(data);
+        this.testId = testId;
+    }
+
+    private TestData<Holder<TestEnvironmentDefinition<?>>> testData() {
+        return info();
+    }
+
+    private Identifier testId() {
+        return testId;
+    }
+
+    @Override
+    public void run(GameTestHelper helper) {
+        MyGameTests.run(testId, helper);
+    }
+
+    @Override
+    public MapCodec<JavaGameTestInstance> codec() {
+        return CODEC;
+    }
+
+    @Override
+    protected MutableComponent typeDescription() {
+        return Component.literal("mymod:java");
+    }
+}
+```
+
+Register that codec in the built-in instance-type registry:
+
+```java
+public final class ModGameTestTypes {
+    public static final DeferredRegister<MapCodec<? extends GameTestInstance>>
+        TEST_INSTANCE_TYPES = DeferredRegister.create(
+            Registries.TEST_INSTANCE_TYPE,
+            MyMod.MOD_ID
+        );
+
+    public static final DeferredHolder<
+        MapCodec<? extends GameTestInstance>,
+        MapCodec<JavaGameTestInstance>
+    > JAVA = TEST_INSTANCE_TYPES.register("java", () -> JavaGameTestInstance.CODEC);
+}
+```
+
+Register and implement the test:
+
+```java
+@EventBusSubscriber(modid = MyMod.MOD_ID)
 public final class MyGameTests {
-    @GameTest(template = "mymod:empty", timeoutTicks = 100)
-    public static void placesExpectedBlock(GameTestHelper helper) {
+    private static final Identifier TEST_ID = Identifier.fromNamespaceAndPath(
+        MyMod.MOD_ID, "places_expected_block");
+    private static final Identifier ENVIRONMENT_ID = Identifier.fromNamespaceAndPath(
+        MyMod.MOD_ID, "default");
+    private static final Identifier STRUCTURE_ID = Identifier.fromNamespaceAndPath(
+        MyMod.MOD_ID, "empty");
+
+    @SubscribeEvent
+    public static void registerTests(RegisterGameTestsEvent event) {
+        Holder<TestEnvironmentDefinition<?>> environment =
+            event.registerEnvironment(ENVIRONMENT_ID);
+        TestData<Holder<TestEnvironmentDefinition<?>>> data =
+            new TestData<>(environment, STRUCTURE_ID, 100, 0, true);
+        event.registerTest(TEST_ID, new JavaGameTestInstance(data, TEST_ID));
+    }
+
+    public static void run(Identifier id, GameTestHelper helper) {
+        if (!id.equals(TEST_ID)) {
+            helper.fail("Unknown Java GameTest: " + id);
+        }
+
         BlockPos position = new BlockPos(1, 1, 1);
         helper.setBlock(position, Blocks.GOLD_BLOCK);
         helper.assertBlockPresent(Blocks.GOLD_BLOCK, position);
@@ -118,24 +243,17 @@ public final class MyGameTests {
 }
 ```
 
-For Minecraft 26.2 resources, place the template at:
+Keep `data/mymod/structure/empty.nbt` committed. The event only fires while
+GameTests are enabled, including the `gameTestServer` run configured by
+ModDevGradle.
 
-`src/main/resources/data/mymod/structure/empty.nbt`
-
-Keep literal `@GameTest(template = "namespace:path")` values aligned with
-`data/<modid>/structure/<path>.nbt`. The validator checks literal values exactly.
-When a test uses a constant or computed template name, the validator reports a
-warning because static path matching is not reliable; verify that case with the
-runtime GameTest server.
-
-## Assertions And Control Flow
+## Assertions And Timing
 
 ```java
 helper.assertBlockPresent(Blocks.GOLD_BLOCK, position);
 helper.assertBlockNotPresent(Blocks.TNT, position);
-helper.assertEntityPresent(EntityType.ZOMBIE, position, 1.0);
-helper.assertEntityNotPresent(EntityType.CREEPER);
-helper.assertContainerContains(position, Items.DIAMOND);
+helper.assertEntityPresent(EntityTypes.ZOMBIE, position, 1.0);
+helper.assertEntityNotPresent(EntityTypes.CREEPER);
 
 helper.runAfterDelay(5, () -> {
     helper.assertBlockPresent(Blocks.GOLD_BLOCK, position);
@@ -143,32 +261,33 @@ helper.runAfterDelay(5, () -> {
 });
 ```
 
-Every success path must call `helper.succeed()`. Prefer a short timeout and a
-single behavior per test so failures remain diagnosable.
+Every successful path must call `helper.succeed()`. Use short timeouts and test
+one behavior per instance.
 
 ## Workflow
 
-1. Put pure logic in `src/test/java` or `src/test/kotlin` and enable JUnit Platform.
-2. Put NeoForge GameTest classes in a scanned Java/Kotlin source root.
-3. Commit templates under `data/<modid>/structure/`.
-4. Register each GameTest class on the mod event bus.
-5. Run the layout validator:
+1. Put pure logic under `src/test/java` or `src/test/kotlin`.
+2. Enable JUnit Platform.
+3. Put GameTest resources under `src/main/resources/data/<modid>/`.
+4. Commit every referenced `structure/*.nbt` template.
+5. Register Java-backed tests with `RegisterGameTestsEvent`.
+6. Run structural validation from the downstream project:
 
    ```bash
    ./scripts/validate-test-layout.sh --root . --strict
    ```
 
-6. Run downstream tests from the Minecraft project, not from this skills repository:
+7. Run the authoritative test tasks in the downstream mod project:
 
    ```bash
    ./gradlew test
    ./gradlew runGameTestServer
    ```
 
-7. Treat a validator pass as structural preflight only; the Gradle test tasks are
-   the authority for compilation and runtime behavior.
+Do not run Minecraft or Gradle from this skills repository.
 
 ## References
 
-- NeoForge GameTest documentation: https://docs.neoforged.net/docs/misc/gametest/
-- JUnit 5 user guide: https://junit.org/junit5/docs/current/user-guide/
+- Layouts and migration rules: `./references/test-layouts.md`
+- NeoForge GameTest event source: https://github.com/neoforged/NeoForge
+- JUnit 5 guide: https://junit.org/junit5/docs/current/user-guide/

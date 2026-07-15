@@ -27,10 +27,12 @@ while [[ $# -gt 0 ]]; do
 Usage: validate-worldgen-json.sh [--root <path>] [--strict]
 
 Checks worldgen JSON integrity:
-- validates JSON under data/**/worldgen, data/**/dimension, data/**/dimension_type, data/**/tags/worldgen, and data/**/neoforge/biome_modifier
+- validates JSON under data/**/worldgen, data/**/dimension, data/**/dimension_type, data/**/timeline, data/**/world_clock, data/**/tags, and data/**/neoforge/biome_modifier
 - validates key directory conventions
 - validates local cross-references:
   dimension -> dimension_type + noise_settings
+  dimension_type -> world_clock + timeline or timeline tag
+  timeline -> world_clock
   placed_feature -> configured_feature
   structure_set -> structure
   jigsaw structure -> template_pool
@@ -91,6 +93,9 @@ declare -a STRUCTURE_TEMPLATES=()
 declare -a STRUCTURE_TAGS=()
 declare -a DIMENSION_TYPES=()
 declare -a NOISE_SETTINGS=()
+declare -a TIMELINES=()
+declare -a WORLD_CLOCKS=()
+declare -a TIMELINE_TAGS=()
 
 DATA_ROOT="$ROOT/data"
 
@@ -251,6 +256,13 @@ find_worldgen_tag_jsons() {
   done < <(find "$DATA_ROOT" -mindepth 3 -maxdepth 3 -type d -path "$DATA_ROOT/*/tags/worldgen" -print0 2>/dev/null)
 }
 
+find_registry_tag_jsons() {
+  local registry="$1"
+  while IFS= read -r -d '' dir; do
+    find "$dir" -mindepth 1 -type f -name '*.json' -print0 2>/dev/null
+  done < <(find "$DATA_ROOT" -mindepth 3 -maxdepth 3 -type d -path "$DATA_ROOT/*/tags/$registry" -print0 2>/dev/null)
+}
+
 to_worldgen_tag_id() {
   local file="$1"
   local registry="$2"
@@ -258,6 +270,16 @@ to_worldgen_tag_id() {
   rel="${file#"$ROOT/data/"}"
   ns="${rel%%/*}"
   path="${rel#*/tags/worldgen/$registry/}"
+  echo "$ns:${path%.json}"
+}
+
+to_registry_tag_id() {
+  local file="$1"
+  local registry="$2"
+  local rel ns path
+  rel="${file#"$ROOT/data/"}"
+  ns="${rel%%/*}"
+  path="${rel#*/tags/$registry/}"
   echo "$ns:${path%.json}"
 }
 
@@ -337,6 +359,32 @@ should_validate_worldgen_tag_ref() {
   [[ -d "$DATA_ROOT/$target_ns/tags/worldgen/$registry" ]]
 }
 
+should_validate_registry_ref() {
+  local source_ns="$1"
+  local id="$2"
+  local registry="$3"
+  local target_ns="${id%%:*}"
+
+  if [[ "$target_ns" == "$source_ns" ]]; then
+    return 0
+  fi
+
+  [[ -d "$DATA_ROOT/$target_ns/$registry" ]]
+}
+
+should_validate_registry_tag_ref() {
+  local source_ns="$1"
+  local id="$2"
+  local registry="$3"
+  local target_ns="${id%%:*}"
+
+  if [[ "$target_ns" == "$source_ns" ]]; then
+    return 0
+  fi
+
+  [[ -d "$DATA_ROOT/$target_ns/tags/$registry" ]]
+}
+
 echo "=== Worldgen Validator ==="
 
 if [[ ! -d "$DATA_ROOT" ]]; then
@@ -359,6 +407,9 @@ done < <(
     find_worldgen_jsons
     find_namespace_jsons 'dimension'
     find_namespace_jsons 'dimension_type'
+    find_namespace_jsons 'timeline'
+    find_namespace_jsons 'world_clock'
+    find_registry_tag_jsons 'timeline'
     find_tags_worldgen_jsons
     find_neoforge_jsons 'biome_modifier'
   }
@@ -409,6 +460,21 @@ while IFS= read -r -d '' f; do
   NOISE_SETTINGS+=("$id")
 done < <(find_worldgen_jsons 'noise_settings')
 
+while IFS= read -r -d '' f; do
+  id="$(to_id "$f")"
+  TIMELINES+=("$id")
+done < <(find_namespace_jsons 'timeline')
+
+while IFS= read -r -d '' f; do
+  id="$(to_id "$f")"
+  WORLD_CLOCKS+=("$id")
+done < <(find_namespace_jsons 'world_clock')
+
+while IFS= read -r -d '' f; do
+  id="$(to_registry_tag_id "$f" 'timeline')"
+  TIMELINE_TAGS+=("$id")
+done < <(find_registry_tag_jsons 'timeline')
+
 while IFS= read -r -d '' _; do
   BIOME_FILES=$((BIOME_FILES + 1))
 done < <(find_worldgen_jsons 'biome')
@@ -418,7 +484,7 @@ while IFS= read -r -d '' _; do
 done < <(find_neoforge_jsons 'biome_modifier')
 
 if [[ "$TOTAL_SUPPORTED_FILES" -eq 0 ]]; then
-  fail "no supported worldgen JSON files found under data/**/worldgen, data/**/dimension, data/**/dimension_type, data/**/tags/worldgen, or data/**/neoforge/biome_modifier"
+  fail "no supported worldgen JSON files found under data/**/worldgen, data/**/dimension, data/**/dimension_type, data/**/timeline, data/**/world_clock, data/**/tags, or data/**/neoforge/biome_modifier"
 fi
 
 if (( ${#PLACED_FEATURES[@]} == 0 && (BIOME_FILES > 0 || BIOME_MODIFIER_FILES > 0) )); then
@@ -470,6 +536,116 @@ while IFS= read -r -d '' dimension_file; do
     fail "dimension references missing noise_settings: $settings_id"
   fi
 done < <(find_namespace_jsons 'dimension')
+
+echo "Checking dimension_type clock and timeline references..."
+while IFS= read -r -d '' dimension_type_file; do
+  if contains_value "$dimension_type_file" "${INVALID_JSON_FILES[@]-}"; then
+    continue
+  fi
+
+  rel="${dimension_type_file#"$ROOT/data/"}"
+  ns="${rel%%/*}"
+
+  clock_ref="$(jq -r '.default_clock? // empty' "$dimension_type_file")"
+  clock_ref="$(strip_cr "$clock_ref")"
+  if [[ -n "$clock_ref" ]]; then
+    clock_id="$(split_ref "$ns" "$clock_ref")"
+    if should_validate_registry_ref "$ns" "$clock_id" 'world_clock'; then
+      if contains_value "$clock_id" "${WORLD_CLOCKS[@]-}"; then
+        pass "dimension_type world_clock target exists: $clock_id"
+      else
+        fail "dimension_type references missing world_clock: $clock_id"
+      fi
+    fi
+  fi
+
+  while IFS= read -r timeline_ref; do
+    timeline_ref="$(strip_cr "$timeline_ref")"
+    [[ -z "$timeline_ref" ]] && continue
+
+    if [[ "$timeline_ref" == \#* ]]; then
+      timeline_tag_id="$(split_ref "$ns" "${timeline_ref#\#}")"
+      if should_validate_registry_tag_ref "$ns" "$timeline_tag_id" 'timeline'; then
+        if contains_value "$timeline_tag_id" "${TIMELINE_TAGS[@]-}"; then
+          pass "dimension_type timeline tag target exists: #$timeline_tag_id"
+        else
+          fail "dimension_type references missing timeline tag: #$timeline_tag_id"
+        fi
+      fi
+      continue
+    fi
+
+    timeline_id="$(split_ref "$ns" "$timeline_ref")"
+    if should_validate_registry_ref "$ns" "$timeline_id" 'timeline'; then
+      if contains_value "$timeline_id" "${TIMELINES[@]-}"; then
+        pass "dimension_type timeline target exists: $timeline_id"
+      else
+        fail "dimension_type references missing timeline: $timeline_id"
+      fi
+    fi
+  done < <(jq -r '(.timelines? // empty) | if type == "array" then .[] else . end' "$dimension_type_file")
+done < <(find_namespace_jsons 'dimension_type')
+
+echo "Checking timeline -> world_clock references..."
+while IFS= read -r -d '' timeline_file; do
+  if contains_value "$timeline_file" "${INVALID_JSON_FILES[@]-}"; then
+    continue
+  fi
+
+  rel="${timeline_file#"$ROOT/data/"}"
+  ns="${rel%%/*}"
+  clock_ref="$(jq -r '.clock? // empty' "$timeline_file")"
+  clock_ref="$(strip_cr "$clock_ref")"
+
+  if [[ -z "$clock_ref" ]]; then
+    fail "timeline missing .clock: ${timeline_file#$ROOT/}"
+    continue
+  fi
+
+  clock_id="$(split_ref "$ns" "$clock_ref")"
+  if should_validate_registry_ref "$ns" "$clock_id" 'world_clock'; then
+    if contains_value "$clock_id" "${WORLD_CLOCKS[@]-}"; then
+      pass "timeline world_clock target exists: $clock_id"
+    else
+      fail "timeline references missing world_clock: $clock_id"
+    fi
+  fi
+done < <(find_namespace_jsons 'timeline')
+
+echo "Checking timeline tag references..."
+while IFS= read -r -d '' timeline_tag_file; do
+  if contains_value "$timeline_tag_file" "${INVALID_JSON_FILES[@]-}"; then
+    continue
+  fi
+
+  rel="${timeline_tag_file#"$ROOT/data/"}"
+  ns="${rel%%/*}"
+  while IFS= read -r timeline_ref; do
+    timeline_ref="$(strip_cr "$timeline_ref")"
+    [[ -z "$timeline_ref" ]] && continue
+
+    if [[ "$timeline_ref" == \#* ]]; then
+      timeline_tag_id="$(split_ref "$ns" "${timeline_ref#\#}")"
+      if should_validate_registry_tag_ref "$ns" "$timeline_tag_id" 'timeline'; then
+        if contains_value "$timeline_tag_id" "${TIMELINE_TAGS[@]-}"; then
+          pass "timeline tag target exists: #$timeline_tag_id"
+        else
+          fail "timeline tag references missing timeline tag: #$timeline_tag_id"
+        fi
+      fi
+      continue
+    fi
+
+    timeline_id="$(split_ref "$ns" "$timeline_ref")"
+    if should_validate_registry_ref "$ns" "$timeline_id" 'timeline'; then
+      if contains_value "$timeline_id" "${TIMELINES[@]-}"; then
+        pass "timeline tag member exists: $timeline_id"
+      else
+        fail "timeline tag references missing timeline: $timeline_id"
+      fi
+    fi
+  done < <(jq -r '.values[]? | strings' "$timeline_tag_file")
+done < <(find_registry_tag_jsons 'timeline')
 
 echo "Checking placed_feature -> configured_feature references..."
 while IFS= read -r -d '' pf_file; do

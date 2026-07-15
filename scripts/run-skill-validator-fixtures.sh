@@ -47,7 +47,7 @@ expect_pass_contains() {
   local output_file
   output_file="$(mktemp)"
   if "$@" >"$output_file" 2>&1; then
-    if grep -Fq "$pattern" "$output_file"; then
+    if grep -Fq -- "$pattern" "$output_file"; then
       cat "$output_file"
       rm -f "$output_file"
       echo "$PASS $name"
@@ -78,7 +78,7 @@ expect_fail_contains() {
     rm -f "$output_file"
     echo "$FAIL $name (expected failure)" >&2
     exit 1
-  elif grep -Fq "$pattern" "$output_file"; then
+  elif grep -Fq -- "$pattern" "$output_file"; then
     cat "$output_file"
     rm -f "$output_file"
     echo "$PASS $name"
@@ -261,20 +261,24 @@ expect_path "tests/fixtures/validators/testing/neoforge-valid"
 expect_path "tests/fixtures/validators/testing/neoforge-missing-template"
 expect_path "tests/fixtures/validators/testing/neoforge-missing-registration"
 expect_path "tests/fixtures/validators/testing/neoforge-nonliteral-template"
+expect_path "tests/fixtures/validators/testing/neoforge-legacy-api"
 expect_path "tests/fixtures/validators/testing/kotlin-valid"
 expect_path "tests/fixtures/validators/testing/missing-source-root"
 expect_pass "testing neoforge valid" \
   ./.agents/skills/minecraft-testing/scripts/validate-test-layout.sh \
   --root tests/fixtures/validators/testing/neoforge-valid
-expect_fail_contains "testing neoforge missing template" "GameTest template fixture missing: mymod:missing_template" \
+expect_fail_contains "testing neoforge missing template" "GameTest structure fixture missing: mymod:missing_template" \
   ./.agents/skills/minecraft-testing/scripts/validate-test-layout.sh \
   --root tests/fixtures/validators/testing/neoforge-missing-template
-expect_fail_contains "testing neoforge missing registration" "NeoForge GameTest class is not registered on an event bus" \
+expect_fail_contains "testing neoforge missing registration" "Java-backed GameTests require RegisterGameTestsEvent registration" \
   ./.agents/skills/minecraft-testing/scripts/validate-test-layout.sh \
   --root tests/fixtures/validators/testing/neoforge-missing-registration
-expect_pass_contains "testing neoforge nonliteral template" "GameTest template is non-literal and cannot be matched statically" \
+expect_pass_contains "testing neoforge programmatic structure" "programmatic GameTest structure references cannot be matched statically" \
   ./.agents/skills/minecraft-testing/scripts/validate-test-layout.sh \
   --root tests/fixtures/validators/testing/neoforge-nonliteral-template
+expect_fail_contains "testing rejects removed GameTest API" "removed annotation-based GameTest API detected" \
+  ./.agents/skills/minecraft-testing/scripts/validate-test-layout.sh \
+  --root tests/fixtures/validators/testing/neoforge-legacy-api
 expect_pass "testing Kotlin source root" \
   ./.agents/skills/minecraft-testing/scripts/validate-test-layout.sh \
   --root tests/fixtures/validators/testing/kotlin-valid
@@ -299,6 +303,7 @@ expect_path "tests/fixtures/validators/worldgen/tags-only"
 expect_path "tests/fixtures/validators/worldgen/invalid-jigsaw-refs"
 expect_path "tests/fixtures/validators/worldgen/external-feature-refs"
 expect_path "tests/fixtures/validators/worldgen/invalid-placed-json"
+expect_path "tests/fixtures/validators/worldgen/invalid-time-refs"
 expect_pass "worldgen valid" \
   ./.agents/skills/minecraft-world-generation/scripts/validate-worldgen-json.sh \
   --root tests/fixtures/validators/worldgen/valid
@@ -334,6 +339,15 @@ expect_fail_contains "worldgen invalid dimension refs type" "dimension reference
 expect_fail_contains "worldgen invalid dimension refs noise" "dimension references missing noise_settings" \
   ./.agents/skills/minecraft-world-generation/scripts/validate-worldgen-json.sh \
   --root tests/fixtures/validators/worldgen/invalid-dimension-refs
+expect_fail_contains "worldgen invalid dimension clock" "dimension_type references missing world_clock" \
+  ./.agents/skills/minecraft-world-generation/scripts/validate-worldgen-json.sh \
+  --root tests/fixtures/validators/worldgen/invalid-time-refs
+expect_fail_contains "worldgen invalid timeline clock" "timeline references missing world_clock" \
+  ./.agents/skills/minecraft-world-generation/scripts/validate-worldgen-json.sh \
+  --root tests/fixtures/validators/worldgen/invalid-time-refs
+expect_fail_contains "worldgen invalid timeline tag member" "timeline tag references missing timeline" \
+  ./.agents/skills/minecraft-world-generation/scripts/validate-worldgen-json.sh \
+  --root tests/fixtures/validators/worldgen/invalid-time-refs
 expect_fail_contains "worldgen invalid external local dimension refs type" "dimension references missing dimension_type: minecraft:custom_missing" \
   ./.agents/skills/minecraft-world-generation/scripts/validate-worldgen-json.sh \
   --root tests/fixtures/validators/worldgen/invalid-external-local-dimension-refs

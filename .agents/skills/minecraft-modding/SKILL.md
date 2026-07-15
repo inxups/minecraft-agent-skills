@@ -1,276 +1,383 @@
 ---
 name: minecraft-modding
-description: "Full-stack Minecraft mod development skill for NeoForge (26.2). Scaffolds new mods, adds custom blocks, items, entities, recipes, commands, GUIs, dimensions, and data generation. Knows NeoForge DeferredRegister + event-bus pattern. Use when the user asks to create a Minecraft mod, add a feature to an existing mod, fix a mod bug, generate JSON assets/data"
+description: "Develop NeoForge mods for Minecraft 26.2 with Java 25, including project scaffolding, registries, events, networking, menus, resources, and data generation."
 ---
 
 # Minecraft Modding Skill
 
 ## Overview
 
-This skill guides Codex through developing open-source Minecraft mods.
-Target platforms:
-
-| Platform | MC Version | Java | Build System |
-|---|---|---|---|
-| **NeoForge** | 26.2 | Java 25 | Gradle + ModDevGradle |
-
-Always confirm the platform and Minecraft version from `gradle.properties` or `build.gradle`
-before writing any mod-specific code.
+Use this skill for NeoForge `26.2` projects running Java `25`. The concrete
+NeoForge artifact changes independently of this skill, so read the downstream
+project's `gradle.properties`, `build.gradle`, and lockfiles before changing a
+version-specific API or dependency.
 
 ### Routing Boundaries
-- `Use when`: the task is Java/Kotlin mod code, registry/event work, networking, datagen wiring, and loader APIs.
-- `Do not use when`: the task is exclusively worldgen data (`minecraft-world-generation`) or automated testing (`minecraft-testing`).
-- `Do not use when`: the task is release automation (`minecraft-ci-release`) or bitmap asset generation (`minecraft-imagegen`).
 
----
+- `Use when`: the task is NeoForge Java/Kotlin code, registries, events,
+  networking, menus, capabilities, resources, or datagen wiring.
+- `Do not use when`: the task is exclusively worldgen registry data; use
+  `minecraft-world-generation`.
+- `Do not use when`: the task is exclusively tests, release automation, or
+  bitmap generation; use the corresponding focused skill.
 
-## 1. Identifying the Platform
+## Baseline Checks
 
-Neoforge + Minecraft 26.2
-
----
-
-## 2. Build & Test Commands
+Before editing a downstream project, confirm all of these values:
 
 ```bash
-# Build the mod jar
-./gradlew build
-
-# Run the Minecraft client to test
-./gradlew runClient
-
-# Run a dedicated server to test
-./gradlew runServer
-
-# Run game tests (NeoForge JUnit-style game tests)
-./gradlew runGameTestServer
-
-# Run data generation (generates JSON assets automatically)
-./gradlew runData
-
-# Clean build cache
-./gradlew clean
-
-# Check for dependency updates (optional)
-./gradlew dependencyUpdates
+rg -n "minecraft_version|neo_version|moddev|JavaLanguageVersion|VERSION_" \
+  gradle.properties build.gradle build.gradle.kts settings.gradle settings.gradle.kts
+./gradlew javaToolchains
 ```
 
-After `./gradlew build`, the mod jar is at:
-`build/libs/<mod_id>-<version>.jar`
+For the reference baseline used by this skill:
 
----
+| Surface | Baseline |
+|---|---|
+| Minecraft | `26.2` |
+| Java | `25` |
+| NeoForge | a `26.2.x` artifact verified in the target project |
+| Build plugin | ModDevGradle `2.0.141` or the target project's verified update |
+| Mappings | official names supplied by NeoForm/ModDevGradle |
 
-## 3. Project Layout
+Do not infer a loader artifact from the Minecraft number alone. Prefer the
+version already resolved by the downstream project.
 
+## Minimal ModDevGradle Project
+
+`build.gradle`:
+
+```groovy
+plugins {
+    id 'java'
+    id 'net.neoforged.moddev' version '2.0.141'
+}
+
+group = mod_group_id
+version = mod_version
+
+base {
+    archivesName = mod_id
+}
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(25)
+
+sourceSets.main.resources {
+    srcDir 'src/generated/resources'
+}
+
+neoForge {
+    version = project.neo_version
+    validateAccessTransformers = true
+
+    runs {
+        client {
+            client()
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+        server {
+            server()
+            programArgument '--nogui'
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+        gameTestServer {
+            type = 'gameTestServer'
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+        data {
+            data()
+            programArguments.addAll '--mod', project.mod_id, '--all',
+                '--output', file('src/generated/resources').absolutePath,
+                '--existing', file('src/main/resources').absolutePath
+        }
+    }
+
+    mods {
+        mymod {
+            sourceSet sourceSets.main
+        }
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 25
+}
 ```
+
+`gradle.properties`:
+
+```properties
+org.gradle.jvmargs=-Xmx2G
+org.gradle.caching=true
+org.gradle.configuration-cache=true
+
+mod_id=mymod
+mod_group_id=com.example.mymod
+mod_version=1.0.0+26.2
+minecraft_version=26.2
+neo_version=26.2.0.15-beta
+```
+
+The `neo_version` above is the verified reference artifact at the time this
+skill was audited. Recheck NeoForge Maven metadata before creating a new
+project and do not silently overwrite a downstream project's pin.
+
+## Project Layout
+
+```text
 src/
   main/
-    java/<groupId>/<modid>/
-      MyMod.java               ← @Mod entry point
-      block/
-        ModBlocks.java         ← DeferredRegister<Block>
-        MyCustomBlock.java
-      item/
-        ModItems.java          ← DeferredRegister<Item>
-      entity/
-        ModEntities.java       ← DeferredRegister<EntityType<?>>
-      menu/                    ← custom GUI containers
-      recipe/
-      worldgen/
+    java/com/example/mymod/
+      MyMod.java
+      registry/
+      event/
+      client/
       datagen/
-        ModDataGen.java        ← GatherDataEvent handler
-        providers/
     resources/
-      META-INF/
-        neoforge.mods.toml     <- NeoForge mod metadata
-      assets/<modid>/
-        blockstates/           ← JSON blockstate definitions
-        models/
-          block/               ← block model JSON
-          item/                ← item model JSON
-        textures/
-          block/               ← 16×16 PNG textures
-          item/
-        lang/
-          en_us.json           ← translation strings
-      data/<modid>/
-        recipe/                <- crafting recipe JSON
-        loot_table/
-          blocks/              ← per-block loot table JSON
-        tags/
-          block/
-          item/
+      META-INF/neoforge.mods.toml
+      assets/mymod/
+        blockstates/
+        items/
+        models/block/
+        models/item/
+        textures/block/
+        textures/item/
+        lang/en_us.json
+      data/mymod/
+        loot_table/blocks/
+        recipe/
+        tags/block/
+        tags/item/
+  generated/resources/
 ```
 
----
+Minecraft 26.2 item rendering uses both
+`assets/<namespace>/items/<id>.json` and the model in
+`assets/<namespace>/models/item/<id>.json`. Generate or author both.
 
-## 4. Core Concepts Cheatsheet
-
-### Sides
-- **Physical client** – the game client JAR (has rendering code)
-- **Physical server** – the dedicated server JAR (no rendering)
-- **Logical client** – the client thread (handles rendering, input)
-- **Logical server** – the server thread (handles world simulation)
-- Keep rendering, screens, and input handlers in client-only event subscribers;
-  client classes must never load on a dedicated server.
-
-### Registries
-Everything in Minecraft lives in a registry. Always register objects; never
-construct them at field initializer time outside a registry call. Use the
-current NeoForge registry constants:
-
-| Type | Registry |
-|------|----------|
-| Blocks | `BuiltInRegistries.BLOCK` |
-| Items | `BuiltInRegistries.ITEM` |
-| Entity types | `BuiltInRegistries.ENTITY_TYPE` |
-| Block entity types | `BuiltInRegistries.BLOCK_ENTITY_TYPE` |
-| Menu types | `BuiltInRegistries.MENU` |
-| Sound events | `BuiltInRegistries.SOUND_EVENT` |
-| Biomes | `Registries.BIOME` registry keys |
-
-Do not copy older `Registry.BLOCK` / `Registry.ITEM` constants into 26.2 code;
-those names are stale for the examples in this skill.
-
-### ResourceLocation / Identifier
-Every registry entry needs a namespaced ID:
-```java
-// NeoForge / vanilla Java
-ResourceLocation id = ResourceLocation.fromNamespaceAndPath("mymod", "my_block");
-```
-
----
-
-## 5. Quick Patterns
-
-See full patterns in `references/neoforge-api.md`.
+## Mod Entry Point And Registries
 
 ```java
-// Main mod class
 @Mod(MyMod.MOD_ID)
-public class MyMod {
+public final class MyMod {
     public static final String MOD_ID = "mymod";
 
-    public MyMod(IEventBus modEventBus) {
-        ModBlocks.BLOCKS.register(modEventBus);
-        ModItems.ITEMS.register(modEventBus);
-        modEventBus.addListener(this::commonSetup);
-    }
-
-    private void commonSetup(FMLCommonSetupEvent event) {
-        // runs after all mods are registered
+    public MyMod(IEventBus modBus) {
+        ModBlocks.BLOCKS.register(modBus);
+        ModItems.ITEMS.register(modBus);
+        ModEntities.ENTITY_TYPES.register(modBus);
     }
 }
 ```
 
+Use the specialized helpers. They assign each block/item/entity's
+`ResourceKey` to its properties or builder before construction.
+
 ```java
-// Block registration
-public class ModBlocks {
-    public static final DeferredRegister<Block> BLOCKS =
-        DeferredRegister.create(BuiltInRegistries.BLOCK, MyMod.MOD_ID);
+public final class ModBlocks {
+    public static final DeferredRegister.Blocks BLOCKS =
+        DeferredRegister.createBlocks(MyMod.MOD_ID);
 
     public static final DeferredBlock<Block> MY_BLOCK =
-        BLOCKS.registerSimpleBlock("my_block",
-            BlockBehaviour.Properties.of()
-                .mapColor(MapColor.STONE)
-                .strength(1.5f, 6.0f)
-                .sound(SoundType.STONE)
-                .requiresCorrectToolForDrops());
+        BLOCKS.registerSimpleBlock("my_block", properties -> properties
+            .mapColor(MapColor.STONE)
+            .strength(1.5F, 6.0F)
+            .sound(SoundType.STONE)
+            .requiresCorrectToolForDrops());
+}
+
+public final class ModItems {
+    public static final DeferredRegister.Items ITEMS =
+        DeferredRegister.createItems(MyMod.MOD_ID);
+
+    public static final DeferredItem<BlockItem> MY_BLOCK =
+        ITEMS.registerSimpleBlockItem(ModBlocks.MY_BLOCK);
+
+    public static final DeferredItem<Item> MY_ITEM =
+        ITEMS.registerSimpleItem("my_item", properties -> properties.stacksTo(16));
+
+    public static final DeferredItem<Item> MY_SWORD =
+        ITEMS.registerItem("my_sword", properties ->
+            new Item(properties.sword(ToolMaterial.IRON, 3.0F, -2.4F)));
+}
+
+public final class ModEntities {
+    public static final DeferredRegister.Entities ENTITY_TYPES =
+        DeferredRegister.createEntities(MyMod.MOD_ID);
+
+    public static final DeferredHolder<EntityType<?>, EntityType<MyMob>> MY_MOB =
+        ENTITY_TYPES.registerEntityType("my_mob", MyMob::new, MobCategory.CREATURE,
+            builder -> builder.sized(0.6F, 1.8F));
 }
 ```
 
----
-
-## 6. JSON Asset Templates
-
-Always provide matching JSON assets for every registered block/item.
-Codex should generate or update these files alongside Java code.
-
-See `references/common-patterns.md` for full JSON templates for:
-- Blockstate JSON
-- Block model JSON (cube, slab, stairs, fence, door, trapdoor, etc.)
-- Item model JSON
-- Loot table JSON
-- Recipe JSON (crafting_shaped, crafting_shapeless, smelting, blasting, stonecutting)
-- Language file (`en_us.json`) entries
-- Tag JSON
-
----
-
-## 7. Data Generation
-
-Prefer data generation over hand-authored JSON for maintainability.
+Use `net.minecraft.resources.Identifier` for namespaced identifiers:
 
 ```java
-// NeoForge – register data gen providers in GatherDataEvent
-@SubscribeEvent
-public static void gatherData(GatherDataEvent event) {
-    DataGenerator gen = event.getGenerator();
-    PackOutput output = gen.getPackOutput();
-    ExistingFileHelper helper = event.getExistingFileHelper();
-    CompletableFuture<HolderLookup.Provider> lookupProvider = event.getLookupProvider();
+Identifier id = Identifier.fromNamespaceAndPath(MyMod.MOD_ID, "my_block");
+```
 
-    gen.addProvider(event.includeClient(), new ModBlockStateProvider(output, helper));
-    gen.addProvider(event.includeClient(), new ModItemModelProvider(output, helper));
-    gen.addProvider(event.includeServer(), new ModRecipeProvider(output, lookupProvider));
-    gen.addProvider(event.includeServer(), new ModLootTableProvider(output, lookupProvider));
-    gen.addProvider(event.includeServer(), new ModBlockTagsProvider(output, lookupProvider, helper));
+## Event Routing
+
+`@EventBusSubscriber` has no bus selector in the 26.2 loader. Static handlers
+for `IModBusEvent` types route to the mod bus; other event types route to
+`NeoForge.EVENT_BUS`. Use `value = Dist.CLIENT` to prevent client classes from
+loading on a dedicated server.
+
+```java
+@EventBusSubscriber(modid = MyMod.MOD_ID)
+public final class ModEvents {
+    @SubscribeEvent
+    public static void registerCapabilities(RegisterCapabilitiesEvent event) {
+        event.registerBlockEntity(
+            Capabilities.Item.BLOCK,
+            ModBlockEntities.MY_BLOCK_ENTITY.get(),
+            (blockEntity, side) -> blockEntity.inventory()
+        );
+    }
+
+    @SubscribeEvent
+    public static void registerCommands(RegisterCommandsEvent event) {
+        event.getDispatcher().register(Commands.literal("mymod")
+            .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+            .executes(context -> 1));
+    }
+}
+
+@EventBusSubscriber(modid = MyMod.MOD_ID, value = Dist.CLIENT)
+public final class ClientEvents {
+    @SubscribeEvent
+    public static void registerScreens(RegisterMenuScreensEvent event) {
+        event.register(ModMenus.MY_MENU.get(), MyScreen::new);
+    }
 }
 ```
 
-Run data generation with `./gradlew runData`, then commit the generated files.
+## Data Generation
 
----
+`GatherDataEvent` is abstract in 26.2. Subscribe separately to its `Client` and
+`Server` variants. Providers are always included in the corresponding event.
 
-## 8. Common Tasks Checklist
+```java
+@EventBusSubscriber(modid = MyMod.MOD_ID)
+public final class ModDataGenerators {
+    @SubscribeEvent
+    public static void gatherClientData(GatherDataEvent.Client event) {
+        event.createProvider(output -> new ModModelProvider(output, MyMod.MOD_ID));
+    }
 
-When adding a **new block**:
-- [ ] `Block` subclass (or use vanilla Block with properties)
-- [ ] Register in `ModBlocks.BLOCKS`
-- [ ] Register `BlockItem` in `ModItems.ITEMS`
-- [ ] Blockstate JSON -> `assets/<modid>/blockstates/<name>.json`
-- [ ] Block model JSON -> `assets/<modid>/models/block/<name>.json`
-- [ ] Item model JSON -> `assets/<modid>/models/item/<name>.json` (or inherits from block)
-- [ ] Texture PNG -> `assets/<modid>/textures/block/<name>.png`
-- [ ] Loot table JSON -> `data/<modid>/loot_table/blocks/<name>.json`
-- [ ] Tags -> `data/<modid>/tags/block/` and `tags/item/`
-- [ ] Language entry in `en_us.json`
-- [ ] Mine-with-correct-tool tag if hardness > 0
+    @SubscribeEvent
+    public static void gatherServerData(GatherDataEvent.Server event) {
+        event.createProvider(ModRecipeProvider.Runner::new);
+        event.createProvider(ModLootTableProvider::new);
+        event.createBlockAndItemTags(ModBlockTagsProvider::new, ModItemTagsProvider::new);
+    }
+}
+```
 
-When adding a **new item**:
-- [ ] `Item` subclass (or use `new Item(properties)`)
-- [ ] Register in `ModItems`
-- [ ] Item model JSON
-- [ ] Texture PNG
-- [ ] Language entry
-- [ ] Creative tab registration with `BuildCreativeModeTabContentsEvent`
-- [ ] Recipe JSON if craftable
+Use vanilla `ModelProvider` for block states, block models, item models, and the
+new client item definition files:
 
-When adding a **new entity**:
-- [ ] Entity class (extends appropriate base: `Mob`, `Animal`, `TamableAnimal`, etc.)
-- [ ] `EntityType` registration
-- [ ] Client-only renderer class
-- [ ] Client-only model class
-- [ ] Register renderer in `EntityRenderersEvent.RegisterRenderers`
-- [ ] Spawn egg item (optional)
-- [ ] Spawn rules / biome modifier
+```java
+public final class ModModelProvider extends ModelProvider {
+    public ModModelProvider(PackOutput output, String modId) {
+        super(output, modId);
+    }
 
----
+    @Override
+    protected void registerModels(
+        BlockModelGenerators blockModels,
+        ItemModelGenerators itemModels
+    ) {
+        blockModels.createTrivialCube(ModBlocks.MY_BLOCK.get());
+        itemModels.generateFlatItem(ModItems.MY_ITEM.get(), ModelTemplates.FLAT_ITEM);
+    }
+}
+```
 
-## 9. Open-Source Conventions
+Run datagen in the downstream mod, inspect the diff, and commit generated
+resources:
 
-- **License**: MIT - include a `LICENSE` file and an `SPDX-License-Identifier` header
-- **Versioning**: semantic mod version plus the Minecraft target where useful (for example, `1.0.0+26.2`)
-- **Changelog**: Keep `CHANGELOG.md` up to date with semver notes
-- **Publishing**: Use `gradle-modrinth` or `curseforgegradle` plugins for CurseForge / Modrinth
-- **CI**: GitHub Actions with `./gradlew build` and `./gradlew runGameTestServer`
-- **PR conventions**: Keep PRs scoped to a single feature; include asset files with Java changes
+```bash
+./gradlew runData
+git diff -- src/generated/resources src/main/resources
+```
 
----
+## Minimal Resource Pair
 
-## 10. References
+`assets/mymod/items/my_item.json`:
 
-- NeoForge API patterns and event system: `./references/neoforge-api.md`
-- Blocks, items, recipes, commands, GUIs, datagen: `./references/common-patterns.md`
-- NeoForge official docs: https://docs.neoforged.net/
-- Minecraft Wiki (data formats): https://minecraft.wiki/w/Java_Edition_data_values
+```json
+{
+  "model": {
+    "model": "mymod:item/my_item",
+    "type": "minecraft:model"
+  }
+}
+```
+
+`assets/mymod/models/item/my_item.json`:
+
+```json
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "mymod:item/my_item"
+  }
+}
+```
+
+Recipe ingredients are identifier strings, tag strings, or lists in 26.2.
+
+```json
+{
+  "category": "building",
+  "key": {
+    "S": "minecraft:stone"
+  },
+  "pattern": [
+    "SS",
+    "SS"
+  ],
+  "result": {
+    "count": 4,
+    "id": "mymod:my_block"
+  },
+  "type": "minecraft:crafting_shaped"
+}
+```
+
+## Implementation Checklist
+
+- Register through a deferred register and attach it to the injected mod bus.
+- Keep client imports under client-only entrypoints or subscribers.
+- Add every required item definition, model, texture, language entry, loot table,
+  recipe, and tag together with its Java registration.
+- Use `ValueInput` and `ValueOutput` for block entity persistence.
+- Use `ItemStacksResourceHandler` and `RegisterCapabilitiesEvent` for item
+  transfer capabilities.
+- Use `EntitySpawnReason` with entity creation helpers that require a reason.
+- Prefer datagen, then review generated JSON against the resolved 26.2 runtime.
+
+## Verification
+
+Run these in the downstream mod project, never in this skills repository:
+
+```bash
+./gradlew compileJava
+./gradlew runData
+./gradlew build
+./gradlew runGameTestServer
+```
+
+Inspect `latest.log` for missing registry keys, codecs, models, textures, and
+dedicated-server classloading failures.
+
+## References
+
+- Detailed NeoForge APIs: `./references/neoforge-api.md`
+- Complete common patterns and resources: `./references/common-patterns.md`
+- NeoForge documentation: https://docs.neoforged.net/
+- NeoForge Maven: https://maven.neoforged.net/releases/net/neoforged/neoforge/

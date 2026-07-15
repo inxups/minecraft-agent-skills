@@ -8,6 +8,16 @@ description: "Create world generation content for Minecraft 26.2 NeoForge mods a
 Use this skill for registry-backed worldgen data. Use `minecraft-modding` for
 unrelated gameplay systems and Java integration outside worldgen.
 
+### Routing Boundaries
+
+- `Use when`: the task is registry-backed biomes, dimensions, configured or
+  placed features, structures, timelines, world clocks, tags, or NeoForge
+  biome modifiers.
+- `Do not use when`: the task is general mod code, resources, or networking;
+  use `minecraft-modding`.
+- `Do not use when`: the task is automated tests, publishing, or bitmap assets;
+  use the corresponding focused skill.
+
 ## Version Gate
 
 Minecraft 26.2 changed several data-driven surfaces. Do not copy older biome,
@@ -42,7 +52,10 @@ src/main/resources/
       template_pool/
     dimension/
     dimension_type/
+    timeline/
+    world_clock/
     structure/
+    tags/timeline/
     tags/worldgen/<registry>/
     neoforge/biome_modifier/
 ~~~
@@ -57,6 +70,9 @@ Keep these relationships intact:
 ~~~text
 dimension -> dimension_type
 dimension noise generator -> worldgen/noise_settings
+dimension_type default_clock -> world_clock
+dimension_type timelines -> timeline or timeline tag
+timeline clock -> world_clock
 placed_feature -> configured_feature
 biome feature entry -> placed_feature
 NeoForge add_features modifier -> placed_feature
@@ -140,6 +156,67 @@ The `features` and `structures` fields may be a single registry reference or
 an array. Structure tags use the `#namespace:path` form and live under
 `tags/worldgen/structure/`.
 
+## Dimension Time Resources
+
+Minecraft 26.2 separates clocks from timelines. A dimension type can select a
+default clock and a direct timeline, a timeline list, or a timeline tag.
+
+`data/mymod/world_clock/overworld.json`:
+
+~~~json
+{}
+~~~
+
+`data/mymod/timeline/day.json`:
+
+~~~json
+{
+  "clock": "mymod:overworld",
+  "period_ticks": 24000,
+  "time_markers": {},
+  "tracks": {}
+}
+~~~
+
+`data/mymod/tags/timeline/in_overworld.json`:
+
+~~~json
+{
+  "values": [
+    "mymod:day"
+  ]
+}
+~~~
+
+The corresponding fields in
+`data/mymod/dimension_type/overworld_like.json` are:
+
+~~~json
+{
+  "ambient_light": 0.0,
+  "coordinate_scale": 1.0,
+  "default_clock": "mymod:overworld",
+  "has_ceiling": false,
+  "has_ender_dragon_fight": false,
+  "has_skylight": true,
+  "height": 384,
+  "infiniburn": "#minecraft:infiniburn_overworld",
+  "logical_height": 384,
+  "min_y": -64,
+  "monster_spawn_block_light_limit": 0,
+  "monster_spawn_light_level": {
+    "max_inclusive": 7,
+    "min_inclusive": 0,
+    "type": "minecraft:uniform"
+  },
+  "timelines": "#mymod:in_overworld"
+}
+~~~
+
+Do not reintroduce pre-26.2 dimension flags such as direct bed, raid, natural,
+or fixed visual-effect fields. Dimension behavior and visuals now use the
+current dimension fields, attributes, clocks, and timelines.
+
 ## Jigsaw Structures
 
 A jigsaw structure needs all of the following:
@@ -167,10 +244,12 @@ Run the bundled structural validator against the directory that contains
 
 The validator checks:
 
-- JSON syntax in supported worldgen, dimension, tag, and biome-modifier paths;
+- JSON syntax in supported worldgen, dimension, timeline, world-clock, tag,
+  and biome-modifier paths;
 - singular NeoForge biome-modifier and worldgen-tag directory conventions;
 - local dimension, feature, structure, template-pool, processor-list, template,
   and structure-tag references;
+- local dimension-type-to-clock/timeline and timeline-to-clock references;
 - scalar and array biome-modifier feature and structure fields.
 
 It intentionally does not claim that arbitrary JSON matches the current 26.2
